@@ -24,13 +24,23 @@ Register new lua binding for class
 template <typename T>
 void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 {
+	MyConstString key = MyConstString(typeid(T).name());
+
+	if (LuaCallbacks::ctors.find(key) != LuaCallbacks::ctors.end())
+	{
+		MY_LOG_ERROR("Class %s already registered", key.GetConstString());
+		return;
+	}
+
+	LuaCallbacks::ctors[key] = classBind.ctor;
+	LuaCallbacks::toString[key] = classBind.toString;
+
+
 	//http://cfc.kizzx2.com/index.php/binding-c-classes-to-lua-a-step-by-step-example-for-beginners/
 
 	lua_State * L = this->state;
 
-	LuaCallbacks::ctors[MyConstString(typeid(T).name())] = classBind.ctor;
-
-
+	
 	// Create a luaL metatable. This metatable is not 
 	// exposed to Lua. The "classBind.className.c_str()" label is used by luaL
 	// internally to identity things.
@@ -38,7 +48,7 @@ void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 	int metaTableID = lua_gettop(L);
 
 	// Register the C functions _into_ the metatable we just created.
-#ifdef _DEBUG
+#if (SAFE_PTR_CHECKS == 1)
 	lua_pushstring(L, classBind.className.c_str());
 	luaL_setfuncs(L, &classBind.methods[0], 1);
 #else
@@ -69,14 +79,26 @@ void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 	//     - .. methods..
 
 
-	lua_pushstring(L, classBind.className.c_str());
+	lua_pushstring(L, classBind.className.c_str());	
 	lua_pushcclosure(L, LuaCallbacks::create_new<T>, 1);
 	lua_setglobal(L, classBind.className.c_str()); // this is how function will be named in Lua
 
-												   //rewrite __gc with our own
+	
+	//rewrite __gc with our own
 	lua_pushliteral(L, "__gc");
 	lua_pushcfunction(L, LuaCallbacks::garbage_collect<T>);
 	lua_settable(L, metaTableID);
+	
+
+	lua_pushliteral(L, "__tostring");
+#if (SAFE_PTR_CHECKS == 1)
+	lua_pushstring(L, classBind.className.c_str());	
+	lua_pushcclosure(L, LuaCallbacks::to_string<T>, 1);
+#else
+	lua_pushcclosure(L, LuaCallbacks::to_string<T>, 0);
+#endif
+	lua_settable(L, metaTableID);
+
 	
 }
 
@@ -92,7 +114,7 @@ void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 
 
 template <typename T>
-inline T * LuaScript::GetFnInputImpl(LuaScript::tag<T *>)
+INLINE T * LuaScript::GetFnInputImpl(LuaScript::tag<T *>)
 {	
 	int argType = lua_type(this->state, this->stackPtr);
 
@@ -112,24 +134,24 @@ inline T * LuaScript::GetFnInputImpl(LuaScript::tag<T *>)
 };
 
 
-inline bool LuaScript::GetFnInputImpl(LuaScript::tag<bool>)
+INLINE bool LuaScript::GetFnInputImpl(LuaScript::tag<bool>)
 {
 	return (lua_toboolean(this->state, this->stackPtr++) == 1);
 }
 
 
-inline float LuaScript::GetFnInputImpl(LuaScript::tag<float>)
+INLINE float LuaScript::GetFnInputImpl(LuaScript::tag<float>)
 {
 	return static_cast<float>(lua_tonumber(this->state, this->stackPtr++));
 }
 
-inline double LuaScript::GetFnInputImpl(LuaScript::tag<double>)
+INLINE double LuaScript::GetFnInputImpl(LuaScript::tag<double>)
 {
 	return lua_tonumber(this->state, this->stackPtr++);
 }
 
 
-inline MyStringAnsi LuaScript::GetFnInputImpl(LuaScript::tag<MyStringAnsi>)
+INLINE MyStringAnsi LuaScript::GetFnInputImpl(LuaScript::tag<MyStringAnsi>)
 {
 	const char * str = lua_tostring(this->state, this->stackPtr++);
 	return str;
@@ -156,7 +178,7 @@ inline int LuaScript::GetReturnValue()
 
 
 template <>
-inline MyStringAnsi LuaScript::GetReturnValue()
+INLINE MyStringAnsi LuaScript::GetReturnValue()
 {
 	const char * str = lua_tostring(this->state, 1);
 	return str;
@@ -164,25 +186,25 @@ inline MyStringAnsi LuaScript::GetReturnValue()
 
 
 template <>
-inline uint32 LuaScript::GetReturnValue()
+INLINE uint32 LuaScript::GetReturnValue()
 {
 	return lua_tounsigned(this->state, 1);
 }
 
 template <>
-inline bool LuaScript::GetReturnValue()
+INLINE bool LuaScript::GetReturnValue()
 {
 	return (lua_toboolean(this->state, 1) == 1);
 }
 
 template <>
-inline float LuaScript::GetReturnValue()
+INLINE float LuaScript::GetReturnValue()
 {
 	return static_cast<float>(lua_tonumber(this->state, -1));
 }
 
 template <>
-inline double LuaScript::GetReturnValue()
+INLINE double LuaScript::GetReturnValue()
 {
 	return lua_tonumber(this->state, 1);
 }
@@ -192,13 +214,13 @@ inline double LuaScript::GetReturnValue()
 //=============================================================================
 
 template <typename T>
-inline void LuaScript::AddFnReturnValue(T * val)
+INLINE void LuaScript::AddFnReturnValue(T * val)
 {
 	this->returnValCount++;	
 	lua_pushlightuserdata(this->state, static_cast<void *>(val));
 };
 
-inline void LuaScript::AddFnReturnValue(bool val)
+INLINE void LuaScript::AddFnReturnValue(bool val)
 {
 	this->returnValCount++;
 	lua_pushboolean(this->state, val);
@@ -206,28 +228,28 @@ inline void LuaScript::AddFnReturnValue(bool val)
 
 
 
-inline void LuaScript::AddFnReturnValue(float val)
+INLINE void LuaScript::AddFnReturnValue(float val)
 {
 	this->returnValCount++;
 	lua_pushnumber(this->state, val);
 };
 
 
-inline void LuaScript::AddFnReturnValue(double val)
+INLINE void LuaScript::AddFnReturnValue(double val)
 {
 	this->returnValCount++;
 	lua_pushnumber(this->state, val);
 };
 
 
-inline void LuaScript::AddFnReturnValue(const char * val)
+INLINE void LuaScript::AddFnReturnValue(const char * val)
 {
 	this->returnValCount++;
 	lua_pushstring(this->state, val);
 };
 
 
-inline void LuaScript::AddFnReturnValue(const MyStringAnsi & val)
+INLINE void LuaScript::AddFnReturnValue(const MyStringAnsi & val)
 {
 	this->returnValCount++;
 	lua_pushstring(this->state, val.GetConstString());
@@ -240,7 +262,7 @@ inline void LuaScript::AddFnReturnValue(const MyStringAnsi & val)
 //=============================================================================
 
 template <typename T>
-inline void LuaScript::SetGlobalVar(const MyStringAnsi & varName, T * val)
+INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, T * val)
 {	
 	lua_pushlightuserdata(this->state, static_cast<void *>(val));
 	lua_setglobal(this->state, varName.GetConstString());
@@ -248,31 +270,31 @@ inline void LuaScript::SetGlobalVar(const MyStringAnsi & varName, T * val)
 
 
 
-inline void LuaScript::SetGlobalVar(const MyStringAnsi & varName, bool val)
+INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, bool val)
 {
 	lua_pushboolean(this->state, val);
 	lua_setglobal(this->state, varName.GetConstString());
 };
 
-inline void LuaScript::SetGlobalVar(const MyStringAnsi & varName, float val)
+INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, float val)
 {
 	lua_pushnumber(this->state, val);
 	lua_setglobal(this->state, varName.GetConstString());
 };
 
-inline void LuaScript::SetGlobalVar(const MyStringAnsi & varName, double val)
+INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, double val)
 {
 	lua_pushnumber(this->state, val);
 	lua_setglobal(this->state, varName.GetConstString());
 };
 
-inline void LuaScript::SetGlobalVar(const MyStringAnsi & varName, const char * val)
+INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, const char * val)
 {
 	lua_pushstring(this->state, val);
 	lua_setglobal(this->state, varName.GetConstString());
 };
 
-inline void LuaScript::SetGlobalVar(const MyStringAnsi & varName, const MyStringAnsi & val)
+INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, const MyStringAnsi & val)
 {
 	lua_pushstring(this->state, val.GetConstString());
 	lua_setglobal(this->state, varName.GetConstString());

@@ -30,6 +30,10 @@ public:
 	std::tuple<ARGS...> args;
 
 	std::function<R(ARGS...)> f;
+	
+	MyFunction(){}
+
+	MyFunction(std::function<R(ARGS...)> f) : f(f){}
 
 	virtual void call()
 	{

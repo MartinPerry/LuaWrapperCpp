@@ -1,7 +1,7 @@
 #ifndef LUA_WRAPPER_H
 #define LUA_WRAPPER_H
 
-namespace MyUtils
+namespace Lua
 {
 	class LuaScript;
 }
@@ -13,49 +13,46 @@ struct lua_State;
 
 #include "../Strings/MyStringAnsi.h"
 #include "../Macros.h"
-#include "../FunctionCallback.h"
 
-namespace MyUtils
+
+namespace Lua
 {
-	//namespace Lua
-	//{
-		class LuaWrapper
-		{
-		public:
-			static void Initialize();
-			static void Destroy();
-			static LuaWrapper * GetInstance();
 
-			LuaScript * GetScript(lua_State * state);
-			bool ExistScript(lua_State * state) const;
+	class LuaWrapper
+	{
+	public:
+		static void Initialize();
+		static void Destroy();
+		static LuaWrapper * GetInstance();
 
-			IFunction * GetMappedFunction(const MyStringAnsi & luaFName);
+		LuaScript * GetScript(lua_State * state);
+		bool ExistScript(lua_State * state) const;
+		
 
-			void RegisterGlobalVariable(const MyStringAnsi & name, void * globalVar);
+		void RegisterGlobalVariable(const MyStringAnsi & name, void * globalVar);
 
-			LuaScript * AddScript(const MyStringAnsi & scriptName, const MyStringAnsi & scriptFileName);
+		LuaScript * AddScript(const MyStringAnsi & scriptName, const MyStringAnsi & scriptFileName);
 
-			void ReloadAll();
+		void ReloadAll();
 
-			friend class LuaScript;
+		friend class LuaScript;
 
-		protected:
-			
-			LuaWrapper();
-			~LuaWrapper();			
+	protected:
 
-			void Release();
+		LuaWrapper();
+		~LuaWrapper();
 
-			static LuaWrapper * instance;
+		void Release();
 
-			std::unordered_map<MyStringAnsi, IFunction *> registeredFunctions;
+		static LuaWrapper * instance;
 
-			std::unordered_map<lua_State *, LuaScript *> luaScripts;
-			std::unordered_map<MyStringAnsi, void * > globalVariales;
+		
+		std::unordered_map<lua_State *, LuaScript *> luaScripts;
+		std::unordered_map<MyStringAnsi, void * > globalVariales;
 
 
-		};
-	//}
+	};
+
 }
 
 

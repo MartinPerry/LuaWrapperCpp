@@ -2,13 +2,9 @@
 #define MAIN_MAIN
 #ifdef MAIN_MAIN
 
-#include "LUA/LuaWrapper.h"
-#include "LUA/LuaScript.h"
+#include "./LUA/LuaWrapperCpp.h"
+
 #include "FunctionCallback.h"
-
-
-#include "./LUA/LuaCallbacks.h"
-#include "./LUA/LuaClassBind.h"
 
 #include "./Strings/MyString.h"
 
@@ -48,6 +44,7 @@
 class Account {
 public:
 	
+	double val = 148;
 
 	Account(double balance) { m_balance = balance;  printf("AC\n"); }
 	//Account(const Account & c) { m_balance = c.m_balance; printf("CC\n"); };
@@ -210,14 +207,17 @@ void luaW_printstack(lua_State* L)
 
 
 
-MyUtils::LuaScript * Create()
+Lua::LuaScript * Create()
 {
-	MyUtils::LuaScript *ls = MyUtils::LuaWrapper::GetInstance()->AddScript("t.lua", "t.lua");
+	//http://loadcode.blogspot.cz/2007/02/wrapping-c-classes-in-lua.html
+	//https://john.nachtimwald.com/2014/07/12/wrapping-a-c-library-in-lua/
 
+	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript("t.lua", "t.lua");
+	
 
 	//ls->RegisterFunction("Print_fce", NULL);
 	
-	MyUtils::LuaClassBind<Account> cb;
+	Lua::LuaClassBind<Account> cb;
 	cb.className = "Account";		
 	cb.AddMethod("Print0", CLASS_METHOD(Account, Print0));
 	cb.AddMethod("Print1", CLASS_METHOD(Account, Print1));
@@ -227,10 +227,26 @@ MyUtils::LuaScript * Create()
 	cb.AddMethod("Print5", CLASS_METHOD(Account, Print5));
 	cb.AddMethod("Print6", CLASS_METHOD(Account, Print6));
 	cb.AddMethod("Print7", CLASS_METHOD(Account, Print7));
-	cb.ctor = [](MyUtils::LuaScript * script) {
+	cb.AddMethod("deposit", CLASS_METHOD(Account, deposit));
+	cb.AddMethod("balance", CLASS_METHOD(Account, balance));
+	cb.ctor = [](Lua::LuaScript * script)  {
 		return new Account(script->GetFnInput<double>());
 	};
+	/*
+	cb.toString = MyFunction<std::string, Account *>([](Account * a) -> std::string {
+		return "string...";
+	});
+	*/
+	/*
+	cb.toString = [](void * a) -> std::string {
+		Account * aa = (Account *)a;
 
+		std::string str = "str";
+		str += std::to_string(aa->val);
+
+		return str;
+	};
+	*/
 	ls->RegisterClass<Account>(cb);
 
 
@@ -276,13 +292,15 @@ int main(int argc, char * argv[])
 #define RESET_ARRAY for (int i = 0; i < ARR_SIZE; i++) { res[i] = 0;}
 
 	
-	MyUtils::LuaWrapper::Initialize();
+	Lua::LuaWrapper::Initialize();
 
 
 	
-	MyUtils::LuaScript *ls = Create();
+	Lua::LuaScript *ls = Create();
 	lua_State * L = ls->GetState();
 
+
+	
 	//lua_boxpointer(L, aa);
 	//(*(void **)(lua_newuserdata(L, sizeof(void *))) = (aa));
 	

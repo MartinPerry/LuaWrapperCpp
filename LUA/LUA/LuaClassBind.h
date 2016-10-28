@@ -1,15 +1,30 @@
 #ifndef LUA_CLASS_BIND_H
 #define LUA_CLASS_BIND_H
 
+namespace Lua
+{
+	class LuaScript;
+}
 
-namespace MyUtils
+extern "C"
+{
+	#include "./lua_lib/lauxlib.h"
+}
+
+#include <string>
+#include <functional>
+
+#include "../Strings/MyStringAnsi.h"
+
+namespace Lua
 {
 
 	template <typename T>
 	struct LuaClassBind
 	{
 		MyStringAnsi className;
-		std::function<void*(MyUtils::LuaScript *)> ctor;
+		std::function<void*(LuaScript *)> ctor;
+		std::function<std::string(void *)> toString;
 
 		std::vector<luaL_Reg> methods;
 

@@ -8,11 +8,13 @@
 #include <algorithm>
 #include <tuple>
 #include <unordered_map>
+#include <string.h>
 
 
 #include "../Strings/MyConstString.h"
 
 #include "./LuaScript.h"
+#include "./LuaMacros.h"
 
 //=============================================================================================
 // Helper templates
@@ -28,8 +30,8 @@ struct my_decay
 	typedef typename std::_If<
 		std::is_arithmetic<_Ty1>::value, typename _Ty1,
 		typename std::_If<
-		std::is_same<MyStringAnsi, _Ty1>::value, typename _Ty1,
-		typename _Ty
+			std::is_same<MyStringAnsi, _Ty1>::value, typename _Ty1,
+			typename _Ty
 		>::type
 	>::type type;
 };
@@ -45,7 +47,7 @@ struct getTuple;
 template <typename T, typename ...Args>
 struct getTuple<T, Args...>
 {
-	static inline std::tuple<T, Args...> get(MyUtils::LuaScript * script)
+	static inline std::tuple<T, Args...> get(Lua::LuaScript * script)
 	{
 		/*
 		std::tuple<T> t = std::make_tuple<T>(script->GetFnInput<T>());
@@ -69,7 +71,7 @@ struct getTuple<T, Args...>
 template <>
 struct getTuple<>
 {
-	static inline std::tuple<> get(MyUtils::LuaScript * script)
+	static inline std::tuple<> get(Lua::LuaScript * script)
 	{
 		return std::make_tuple<>();
 	}
@@ -131,7 +133,7 @@ struct func_impl_class_method<Res(ClassType::*)(Args...), MethodName, std::index
 	}
 	*/
 
-	static void call(ClassType * obj, MyUtils::LuaScript * s)
+	static void call(ClassType * obj, Lua::LuaScript * s)
 	{
 		//auto tmp = getTuple<typename std::decay<Args>::type...>::get(s);
 		//auto tmp = getTuple<Args&&...>::get(s);
@@ -146,7 +148,7 @@ struct func_impl_class_method<Res(ClassType::*)(Args...), MethodName, std::index
 		(obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);		
 	}
 
-	static Res callWithReturn(ClassType * obj, MyUtils::LuaScript * s)
+	static Res callWithReturn(ClassType * obj, Lua::LuaScript * s)
 	{
 		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
 
@@ -199,13 +201,13 @@ template <class Res,
 struct func_impl_method<Res(*)(Args...), MethodName, std::index_sequence<Is...>>
 {
 	
-	static void call(MyUtils::LuaScript * s)
+	static void call(Lua::LuaScript * s)
 	{
 		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
 		(MethodName)(std::forward<Args>((std::get<Is>(tmp)))...);
 	}
 
-	static Res callWithReturn(MyUtils::LuaScript * s)
+	static Res callWithReturn(Lua::LuaScript * s)
 	{
 		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
 		return (MethodName)(std::forward<Args>((std::get<Is>(tmp)))...);
@@ -221,14 +223,7 @@ struct func_impl_method<Res(*)(Args...), MethodName, std::index_sequence<Is...>>
 //=============================================================================================
 
 
-//=============================================================================================
-// Some helper DEFINEs
 
-#define CLASS_METHOD(ClassName, MethodName) \
-	LuaCallbacks::function<decltype(&ClassName::MethodName), &ClassName::MethodName>
-
-#define METHOD(MethodName) \
-	LuaCallbacks::function<decltype(&MethodName), &MethodName>
 
 
 //=============================================================================================
@@ -240,23 +235,42 @@ struct LuaCallbacks
 	//http://stackoverflow.com/questions/29194858/order-of-function-calls-in-variadic-template-expansion
 
 	//=============================================================================================
-	// Class callbacks
+	// Some Defines
 	//=============================================================================================
+
+#define VOID_RETURN true
+#define NO_VOID_RETURN false
+#define HAVE_ARGS >
+#define NO_ARGS ==
+
+#define CLASS_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) class MethodType, \
+		MethodType MethodName, \
+		typename MethodInfo = class_method_info<MethodType>, \
+		typename RetVal = MethodInfo::RetVal, \
+		typename std::enable_if <std::is_same<void, RetVal>::value == VOID_RET_TYPE>::type* = nullptr, \
+		typename std::enable_if <(MethodInfo::ArgsCount ARGS 0), void>::type* = nullptr, \
+		typename std::enable_if <(MethodInfo::IsClassMethod == true)>::type* = nullptr
+
+#define METHOD_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) class MethodType, \
+		MethodType MethodName, \
+		typename MethodInfo = method_info<MethodType>, \
+		typename RetVal = MethodInfo::RetVal, \
+		typename std::enable_if <std::is_same<void, RetVal>::value == VOID_RET_TYPE>::type* = nullptr, \
+		typename std::enable_if <(MethodInfo::ArgsCount ARGS 0), void>::type* = nullptr, \
+		typename std::enable_if <(MethodInfo::IsClassMethod == false)>::type* = nullptr
 
 #define CLASS_FUNCTION_BODY \
 		MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1); \
-		MyUtils::LuaScript * script = MyUtils::LuaWrapper::GetInstance()->GetScript(L); \
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L); \
 		script->Reset(); \
 		script->IncStack(); 
 
+	//=============================================================================================
+	// Class callbacks
+	//=============================================================================================
 
-	template <class MethodType, MethodType MethodName,
-		typename MethodInfo = class_method_info<MethodType>,
-		typename RetVal = MethodInfo::RetVal,
-		typename std::enable_if <std::is_same<void, RetVal>::value>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::ArgsCount > 0), void>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::IsClassMethod == true)>::type* = nullptr
-	>
+
+	template <CLASS_SIGNATURE(MethodType, VOID_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{
 		CLASS_FUNCTION_BODY;
@@ -267,13 +281,7 @@ struct LuaCallbacks
 	}
 
 
-	template <class MethodType, MethodType MethodName,
-		typename MethodInfo = class_method_info<MethodType>,
-		typename RetVal = MethodInfo::RetVal,
-		typename std::enable_if <!std::is_same<void, RetVal>::value>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::ArgsCount > 0), void>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::IsClassMethod == true)>::type* = nullptr
-	>
+	template <CLASS_SIGNATURE(MethodType, NO_VOID_RETURN, HAVE_ARGS)>	
 	static int function(lua_State *L)
 	{
 		CLASS_FUNCTION_BODY;
@@ -284,13 +292,7 @@ struct LuaCallbacks
 	}
 
 
-	template <class MethodType, MethodType MethodName,
-		typename MethodInfo = class_method_info<MethodType>,
-		typename RetVal = MethodInfo::RetVal,
-		typename std::enable_if <std::is_same<void, RetVal>::value>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::ArgsCount == 0), void>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::IsClassMethod == true)>::type* = nullptr
-	>
+	template <CLASS_SIGNATURE(MethodType, VOID_RETURN, NO_ARGS)>		
 	static int function(lua_State *L)
 	{
 		CLASS_FUNCTION_BODY;
@@ -300,13 +302,7 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
-	template <class MethodType, MethodType MethodName,
-		typename MethodInfo = class_method_info<MethodType>,
-		typename RetVal = MethodInfo::RetVal,
-		typename std::enable_if <!std::is_same<void, RetVal>::value>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::ArgsCount == 0), void>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::IsClassMethod == true)>::type* = nullptr
-	>
+	template <CLASS_SIGNATURE(MethodType, NO_VOID_RETURN, NO_ARGS)>		
 	static int function(lua_State *L)
 	{
 		CLASS_FUNCTION_BODY;
@@ -322,57 +318,34 @@ struct LuaCallbacks
 
 	
 
-	template <class MethodType, MethodType MethodName,
-		typename MethodInfo = method_info<MethodType>,
-		typename RetVal = MethodInfo::RetVal,
-		typename std::enable_if <std::is_same<void, RetVal>::value>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::ArgsCount > 0), void>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::IsClassMethod == false)>::type* = nullptr
-	>
+	template <METHOD_SIGNATURE(MethodType, VOID_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{
-		MyUtils::LuaScript * script = MyUtils::LuaWrapper::GetInstance()->GetScript(L);
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset(); 
-		
-		printf("Function call");
-
+				
 		func_impl_method<MethodType, MethodName>::call(script);
 
 		return script->GetFnReturnValueCount();
 	}
 
-	template <class MethodType, MethodType MethodName,
-		typename MethodInfo = method_info<MethodType>,
-		typename RetVal = MethodInfo::RetVal,
-		typename std::enable_if <!std::is_same<void, RetVal>::value>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::ArgsCount > 0), void>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::IsClassMethod == false)>::type* = nullptr
-	>
+	template <METHOD_SIGNATURE(MethodType, NO_VOID_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{
 
-		MyUtils::LuaScript * script = MyUtils::LuaWrapper::GetInstance()->GetScript(L);
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
 		
-		printf("Function call");
-
 		script->AddFnReturnValue(func_impl_method<MethodType, MethodName>::callWithReturn(script));
-
 
 		return script->GetFnReturnValueCount();
 	}
 
-	template <class MethodType, MethodType MethodName,
-		typename MethodInfo = method_info<MethodType>,
-		typename RetVal = MethodInfo::RetVal,
-		typename std::enable_if <std::is_same<void, RetVal>::value>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::ArgsCount == 0), void>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::IsClassMethod == false)>::type* = nullptr
-	>
+	template <METHOD_SIGNATURE(MethodType, VOID_RETURN, NO_ARGS)>	
 	static int function(lua_State *L)
 	{
 
-		MyUtils::LuaScript * script = MyUtils::LuaWrapper::GetInstance()->GetScript(L);
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
 				
 		(MethodName)();
@@ -380,17 +353,11 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
-	template <class MethodType, MethodType MethodName,
-		typename MethodInfo = method_info<MethodType>,
-		typename RetVal = MethodInfo::RetVal,			
-		typename std::enable_if <!std::is_same<void, RetVal>::value>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::ArgsCount == 0), void>::type* = nullptr,
-		typename std::enable_if <(MethodInfo::IsClassMethod == false)>::type* = nullptr
-	>
+	template <METHOD_SIGNATURE(MethodType, NO_VOID_RETURN, NO_ARGS)>		
 	static int function(lua_State *L)
 	{
 
-		MyUtils::LuaScript * script = MyUtils::LuaWrapper::GetInstance()->GetScript(L);
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
 				
 		script->AddFnReturnValue((MethodName)());
@@ -402,7 +369,8 @@ struct LuaCallbacks
 	
 //protected:
 
-	static std::unordered_map<MyConstString, std::function<void*(MyUtils::LuaScript *)> > ctors;
+	static std::unordered_map<MyConstString, std::function<void*(Lua::LuaScript *)> > ctors;
+	static std::unordered_map<MyConstString, std::function<std::string(void *)>> toString;
 
 	template <typename T>
 	static T * GetPtr(lua_State *L, int narg)
@@ -412,20 +380,19 @@ struct LuaCallbacks
 
 		if (argType == LUA_TUSERDATA)
 		{
-			void * ud = NULL;
-#ifdef _DEBUG		
+			void * ud = NULL;			
+#if (SAFE_PTR_CHECKS == 1)	
 			ud = luaL_checkudata(L, narg, lua_tostring(L, lua_upvalueindex(1)));
 #else
 			ud = lua_touserdata(L, narg); //"unsafe" - can run in "release", 
-										  // because we check bugs in debug
+										  // if we check bugs in debug
 #endif
 			if (!ud)
 			{
 				//luaL_typerror(L, narg, className);
 				MY_LOG_ERROR("Type ad the stack top is not LUA_TUSERDATA");
 				return NULL;
-			}
-			//return   (Account *)ud; 
+			}			
 			return   *(T **)ud;  // unbox pointer
 		}
 		else if (argType == LUA_TLIGHTUSERDATA)
@@ -445,13 +412,10 @@ struct LuaCallbacks
 	{
 
 		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));
+		
+		std::function<void*(Lua::LuaScript *)> f = LuaCallbacks::ctors[MyConstString(typeid(T).name())];
 
-		//double balance = luaL_checknumber(L, 1);		
-		//*udata = new T(balance);
-
-		std::function<void*(MyUtils::LuaScript *)> f = LuaCallbacks::ctors[MyConstString(typeid(T).name())];
-
-		MyUtils::LuaScript * script = MyUtils::LuaWrapper::GetInstance()->GetScript(L);
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
 		T * newInstance = static_cast<T *>(f(script));
 		*udata = newInstance;
@@ -465,21 +429,38 @@ struct LuaCallbacks
 	template <typename T>
 	static int garbage_collect(lua_State *L)
 	{
-		printf("***GC\n");
+		MY_LOG_INFO("Garbage Collect");
 
 		int argType = lua_type(L, 1);
 		if (argType == LUA_TUSERDATA)
 		{			
 			T* a = (*(T **)(lua_touserdata(L, 1)));
 			delete a;
+			a = NULL;
 		}
 		return 0;
+	}
+
+	template <typename T>
+	static int to_string(lua_State *L)
+	{
+		T *a = LuaCallbacks::GetPtr<T>(L, 1);
+		std::function<std::string(void *)> f = LuaCallbacks::toString[MyConstString(typeid(T).name())];
+		if (f == nullptr)
+		{
+			lua_pushfstring(L, "[__tostring userdata = address: %p]", a);
+		}
+		else
+		{
+			lua_pushfstring(L, "%s", f(a).c_str());
+		}
+		return 1;
 	}
 
 
 };
 
-std::unordered_map<MyConstString, std::function<void*(MyUtils::LuaScript *)> > LuaCallbacks::ctors;
+
 
 
 #endif

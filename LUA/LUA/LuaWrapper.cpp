@@ -1,19 +1,13 @@
 #include "./LuaWrapper.h"
-#include "./LuaScript.h"
+
 
 #include "../Logger.h"
 
-
-extern "C" 
-{	
-	#include "./lua_lib/lua.h"
-	#include "./lua_lib/lualib.h"
-	#include "./lua_lib/lauxlib.h"
-} 
+#include "./LuaWrapperCpp.h"
 
 
-using namespace MyUtils;
-//using namespace Lua;
+//using namespace MyUtils;
+using namespace Lua;
 
 LuaWrapper * LuaWrapper::instance = NULL;
 
@@ -36,14 +30,7 @@ void LuaWrapper::Release()
 	}
 	this->luaScripts.clear();
 
-
-	std::unordered_map<MyStringAnsi, IFunction *>::iterator jt;
-	for (jt = this->registeredFunctions.begin(); jt != this->registeredFunctions.end(); jt++)
-	{		
-		SAFE_DELETE(jt->second);
-	}
-	this->registeredFunctions.clear();
-
+	
 
 	this->globalVariales.clear();
 }
@@ -88,16 +75,7 @@ LuaScript * LuaWrapper::GetScript(lua_State * state)
 	return this->luaScripts[state];
 }
 
-IFunction * LuaWrapper::GetMappedFunction(const MyStringAnsi & luaFName)
-{
-	auto res = this->registeredFunctions.find(luaFName);
-	if (res == this->registeredFunctions.end())
-	{
-		return NULL;
-	}
-	
-	return res->second;
-}
+
 
 void LuaWrapper::RegisterGlobalVariable(const MyStringAnsi & name, void * globalVar)
 {

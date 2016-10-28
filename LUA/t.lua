@@ -15,6 +15,8 @@ print("Hello from Lua....")
 a = Account(100)
 aa = Account(200)
 
+print(a)
+
 r = 12
 printf("Old r: %i\n", r)
 a:Print1(r)

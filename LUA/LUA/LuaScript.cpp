@@ -1,12 +1,12 @@
 #include "./LuaScript.h"
 
 
-#include "../FunctionCallback.h"
+
 #include "../Logger.h"
 
 
-using namespace MyUtils;
-//using namespace Lua;
+
+using namespace Lua;
 
 //http://pgl.yoyo.org/luai/i/lua_topointer
 //http://rubenlaguna.com/wp/2012/11/26/first-steps-lua-cplusplus-integration/

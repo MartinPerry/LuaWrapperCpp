@@ -2,12 +2,6 @@
 #define LUA_SCRIPT_H
 
 
-extern "C" 
-{	
-	#include "./lua_lib/lua.h"
-	#include "./lua_lib/lualib.h"
-	#include "./lua_lib/lauxlib.h"
-} 
 
 #include <vector>
 
@@ -15,10 +9,11 @@ extern "C"
 #include "../Macros.h"
 #include "../Strings/MyStringAnsi.h"
 
-#include "./LuaWrapper.h"
-#include "../FunctionCallback.h"
 
+#include "./LuaWrapper.h"
 #include "./LuaClassBind.h"
+#include "./LuaMacros.h"
+
 
 
 #define INTEGRAL_SIGNED(T) typename std::enable_if <std::is_integral<T>::value>::type* = nullptr, \
@@ -28,11 +23,8 @@ extern "C"
 		typename std::enable_if <std::is_signed<T>::value == false>::type* = nullptr	
 
 
-namespace MyUtils 
+namespace Lua 
 {
-	//namespace Lua
-	//{
-
 		class LuaScript
 		{
 		public:
@@ -79,7 +71,7 @@ namespace MyUtils
 			//=============================================================================
 
 			template <class T>
-			inline auto GetFnInput() -> decltype(GetFnInputImpl(tag<T>{}))
+			INLINE auto GetFnInput() -> decltype(GetFnInputImpl(tag<T>{}))
 			{
 				return GetFnInputImpl(tag<T>{});
 			};
@@ -100,14 +92,14 @@ namespace MyUtils
 			void AddFnReturnValue(T * val);
 
 			template <typename T, INTEGRAL_SIGNED(T)>
-			inline void AddFnReturnValue(T val)
+			INLINE void AddFnReturnValue(T val)
 			{
 				this->returnValCount++;
 				lua_pushinteger(this->state, val);
 			};
 
 			template <typename T, INTEGRAL_UNSIGNED(T)>
-			inline void AddFnReturnValue(T val)
+			INLINE void AddFnReturnValue(T val)
 			{
 				this->returnValCount++;
 				lua_pushunsigned(this->state, val);
@@ -128,14 +120,14 @@ namespace MyUtils
 			void SetGlobalVar(const MyStringAnsi & varName, T * val);
 
 			template <typename T, INTEGRAL_SIGNED(T)>
-			inline void SetGlobalVar(const MyStringAnsi & varName, T val)
+			INLINE void SetGlobalVar(const MyStringAnsi & varName, T val)
 			{
 				lua_pushinteger(this->state, val);
 				lua_setglobal(this->state, varName.GetConstString());
 			}
 
 			template <typename T, INTEGRAL_UNSIGNED(T)>
-			inline void SetGlobalVar(const MyStringAnsi & varName, T val)
+			INLINE void SetGlobalVar(const MyStringAnsi & varName, T val)
 			{
 				lua_pushunsigned(this->state, val);
 				lua_setglobal(this->state, varName.GetConstString());
@@ -183,20 +175,20 @@ namespace MyUtils
 			T * GetFnInputImpl(tag<T *>);
 
 			template <typename T>
-			inline T & GetFnInputImpl(tag<T &>)
+			INLINE T & GetFnInputImpl(tag<T &>)
 			{
 				return *(this->GetFnInputImpl(LuaScript::tag<T *>{}));
 			};
 
 
 			template <typename T, INTEGRAL_SIGNED(T)>
-			inline T GetFnInputImpl(tag<T>)
+			INLINE T GetFnInputImpl(tag<T>)
 			{
 				return static_cast<T>(lua_tointeger(this->state, this->stackPtr++));
 			};
 
 			template <typename T, INTEGRAL_UNSIGNED(T)>
-			inline T GetFnInputImpl(tag<T>)
+			INLINE T GetFnInputImpl(tag<T>)
 			{
 				return static_cast<T>(lua_tounsigned(this->state, this->stackPtr++));
 			};
@@ -213,7 +205,7 @@ namespace MyUtils
 		#include "LuaScript.inl"
 
 
-	//}
+	
 }
 
 
