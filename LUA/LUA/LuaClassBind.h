@@ -27,12 +27,15 @@ namespace Lua
 		std::function<std::string(void *)> toString;
 
 		std::vector<luaL_Reg> methods;
+		std::vector<luaL_Reg> attrs;
 
 
 
-		LuaClassBind() 
+		LuaClassBind() : className(typeid(T).name())
 		{
 			methods.push_back({ 0,0 });
+			attrs.push_back({ 0, 0 });
+			
 		}
 
 		~LuaClassBind()
@@ -50,7 +53,14 @@ namespace Lua
 			name.FillString(methods[methods.size() - 1].name);
 			methods[methods.size() - 1].func = f;
 			methods.push_back({ 0,0 });
-		}
+		};
+
+		void AddAttribute(const MyStringAnsi & name, lua_CFunction f)
+		{
+			name.FillString(attrs[attrs.size() - 1].name);
+			attrs[attrs.size() - 1].func = f;
+			attrs.push_back({ 0,0 });
+		};
 
 
 	};

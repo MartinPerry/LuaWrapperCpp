@@ -196,6 +196,33 @@ void LuaScript::IncStack()
 	this->stackPtr++;	
 }
 
+void LuaScript::PrintStack()
+{
+	this->PrintStack("");
+}
+
+void LuaScript::PrintStack(const MyStringAnsi & id) 
+{
+	int i = lua_gettop(this->state);
+	printf("\n ----------------  Stack Dump [%s] ----------------\n", id.c_str());
+	while (i) {
+		int t = lua_type(this->state, i);
+		switch (t) {
+		case LUA_TSTRING:
+			printf("%d:'%s'\n", i, lua_tostring(this->state, i));
+			break;
+		case LUA_TBOOLEAN:
+			printf("%d: %s\n", i, lua_toboolean(this->state, i) ? "true" : "false");
+			break;
+		case LUA_TNUMBER:
+			printf("%d: %g\n", i, lua_tonumber(this->state, i));
+			break;				
+		default: printf("%d: %s (0x%p)\n", i, lua_typename(this->state, t), lua_topointer(this->state, i)); break;
+		}
+		i--;
+	}
+	printf("--------------- Stack Dump Finished [%s] ---------------\n\n", id.c_str());
+}
 
 /*-----------------------------------------------------------
 Function:	GetFnInputTableInt

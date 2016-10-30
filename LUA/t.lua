@@ -3,8 +3,47 @@ printf = function(s,...)
            return io.write(s:format(...))
          end -- function
 
+-- https://coronalabs.com/blog/2014/09/02/tutorial-printing-table-contents/
+function print_r ( t )  
+    local print_r_cache={}
+    local function sub_print_r(t,indent)
+        if (print_r_cache[tostring(t)]) then
+            print(indent.."*"..tostring(t))
+        else
+            print_r_cache[tostring(t)]=true
+            if (type(t)=="table") then
+                for pos,val in pairs(t) do
+                    if (type(val)=="table") then
+                        print(indent.."["..pos.."] => "..tostring(t).." {")
+                        sub_print_r(val,indent..string.rep(" ",string.len(pos)+8))
+                        print(indent..string.rep(" ",string.len(pos)+6).."}")
+                    elseif (type(val)=="string") then
+                        print(indent.."["..pos..'] => "'..val..'"')
+                    else
+                        print(indent.."["..pos.."] => "..tostring(val))
+                    end
+                end
+            else				
+                print(indent.."Object: "..tostring(t))				
+            end
+        end
+    end
+    if (type(t)=="table") then
+        print(tostring(t).." {")
+        sub_print_r(t,"  ")
+        print("}")
+    else
+        sub_print_r(t,"  ")
+    end
+    print()
+end
+
+
+
 
 print("Hello from Lua....")
+
+
 
 
 -- Because the metatable has been exposed 
@@ -14,6 +53,77 @@ print("Hello from Lua....")
 
 a = Account(100)
 aa = Account(200)
+a2 = Account2(200)
+--print_r(getmetatable(a))
+--print("-------------")
+a:Print0()
+
+--print_r(getmetatable(a))
+--print("-------------")
+a2:PrintX()
+
+os.exit()
+
+
+
+local myTable = {
+    firstName = "Fred",
+    lastName = "Bob",
+    phoneNumber = "(555) 555-1212",
+    age = Account(100),
+    favoriteSports = { x = "Baseball", "Hockey", "Soccer" },
+    favoriteTeams  = { "Cowboys", "Panthers", "Reds" },
+	__ = {e = "SUBINDEX"}
+}
+ 
+function myTable:add2(x,y)
+  return x+y
+end
+
+--http://lua-users.org/wiki/MetamethodsTutorial
+local mt = {
+  __add = function (lhs, rhs) -- "add" event handler
+    return { value = lhs.value + rhs.value }
+  end,
+  __index = function(t, key)
+    print("__index called")	
+  end,
+  __newindex = function(t, key)
+    print("__newindex called")
+  end,
+  xxxx = "Fred"
+}
+
+setmetatable(myTable, mt) -- use "mt" as the metatable for "x"
+--myTable.lastName = "x"
+--myTable.oo = 5
+print(myTable.e)
+print_r(myTable)
+print_r(getmetatable(myTable))
+
+os.exit() 
+
+--print_r(myTable)
+print("Index set / get")
+--os.exit() 
+print("->");
+print(a.vv)
+--print(a.xx)
+--a.cc:PrintX()
+local xo = a.cc
+a2:PrintX()
+print(a.cc)
+a.name = 789
+a.eco = 789
+
+
+os.exit() 
+print("Account:")
+print_r(a)
+print("Account metatable:")
+print_r(getmetatable(a))
+
+os.exit() 
 
 print(a)
 
@@ -24,7 +134,12 @@ printf("New r: %i\n", r)
 
 a:Print3("ahoj3", 9, 8)
 
+printf("-------\n")
+
 a:Print0()
+a2:PrintX()
+
+printf("-------\n")
 
 a:Print6(aa)
 a:Print6(cc)

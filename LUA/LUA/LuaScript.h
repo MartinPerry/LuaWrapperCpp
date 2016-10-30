@@ -56,6 +56,9 @@ namespace Lua
 				
 			void IncStack();
 
+			void PrintStack();
+			void PrintStack(const MyStringAnsi & id);
+
 			//=============================================================================
 
 			int GetFnInputTableInt(const MyStringAnsi & varName);
@@ -71,7 +74,7 @@ namespace Lua
 			//=============================================================================
 
 			template <class T>
-			INLINE auto GetFnInput() -> decltype(GetFnInputImpl(tag<T>{}))
+			LUA_INLINE auto GetFnInput() -> decltype(GetFnInputImpl(tag<T>{}))
 			{
 				return GetFnInputImpl(tag<T>{});
 			};
@@ -92,14 +95,14 @@ namespace Lua
 			void AddFnReturnValue(T * val);
 
 			template <typename T, INTEGRAL_SIGNED(T)>
-			INLINE void AddFnReturnValue(T val)
+			LUA_INLINE void AddFnReturnValue(T val)
 			{
 				this->returnValCount++;
 				lua_pushinteger(this->state, val);
 			};
 
 			template <typename T, INTEGRAL_UNSIGNED(T)>
-			INLINE void AddFnReturnValue(T val)
+			LUA_INLINE void AddFnReturnValue(T val)
 			{
 				this->returnValCount++;
 				lua_pushunsigned(this->state, val);
@@ -115,19 +118,21 @@ namespace Lua
 			//===================== Set LUA global variable ===============================
 			//=============================================================================
 
-
 			template <typename T>
 			void SetGlobalVar(const MyStringAnsi & varName, T * val);
 
+			template <typename T>
+			void SetGlobalVarLight(const MyStringAnsi & varName, T * val);
+
 			template <typename T, INTEGRAL_SIGNED(T)>
-			INLINE void SetGlobalVar(const MyStringAnsi & varName, T val)
+			LUA_INLINE void SetGlobalVar(const MyStringAnsi & varName, T val)
 			{
 				lua_pushinteger(this->state, val);
 				lua_setglobal(this->state, varName.GetConstString());
 			}
 
 			template <typename T, INTEGRAL_UNSIGNED(T)>
-			INLINE void SetGlobalVar(const MyStringAnsi & varName, T val)
+			LUA_INLINE void SetGlobalVar(const MyStringAnsi & varName, T val)
 			{
 				lua_pushunsigned(this->state, val);
 				lua_setglobal(this->state, varName.GetConstString());
@@ -138,6 +143,9 @@ namespace Lua
 			void SetGlobalVar(const MyStringAnsi & varName, double val);
 			void SetGlobalVar(const MyStringAnsi & varName, const char * val);
 			void SetGlobalVar(const MyStringAnsi & varName, const MyStringAnsi & val);
+
+
+
 
 			friend class LuaWrapper;
 			//friend class LuaCallbacks;
@@ -175,20 +183,20 @@ namespace Lua
 			T * GetFnInputImpl(tag<T *>);
 
 			template <typename T>
-			INLINE T & GetFnInputImpl(tag<T &>)
+			LUA_INLINE T & GetFnInputImpl(tag<T &>)
 			{
 				return *(this->GetFnInputImpl(LuaScript::tag<T *>{}));
 			};
 
 
 			template <typename T, INTEGRAL_SIGNED(T)>
-			INLINE T GetFnInputImpl(tag<T>)
+			LUA_INLINE T GetFnInputImpl(tag<T>)
 			{
 				return static_cast<T>(lua_tointeger(this->state, this->stackPtr++));
 			};
 
 			template <typename T, INTEGRAL_UNSIGNED(T)>
-			INLINE T GetFnInputImpl(tag<T>)
+			LUA_INLINE T GetFnInputImpl(tag<T>)
 			{
 				return static_cast<T>(lua_tounsigned(this->state, this->stackPtr++));
 			};

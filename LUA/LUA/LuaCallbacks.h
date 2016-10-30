@@ -238,12 +238,12 @@ struct LuaCallbacks
 	// Some Defines
 	//=============================================================================================
 
-#define VOID_RETURN true
-#define NO_VOID_RETURN false
+#define NO_RETURN true
+#define HAVE_RETURN false
 #define HAVE_ARGS >
 #define NO_ARGS ==
 
-#define CLASS_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) class MethodType, \
+#define CLASS_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) typename MethodType, \
 		MethodType MethodName, \
 		typename MethodInfo = class_method_info<MethodType>, \
 		typename RetVal = MethodInfo::RetVal, \
@@ -251,7 +251,7 @@ struct LuaCallbacks
 		typename std::enable_if <(MethodInfo::ArgsCount ARGS 0), void>::type* = nullptr, \
 		typename std::enable_if <(MethodInfo::IsClassMethod == true)>::type* = nullptr
 
-#define METHOD_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) class MethodType, \
+#define METHOD_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) typename MethodType, \
 		MethodType MethodName, \
 		typename MethodInfo = method_info<MethodType>, \
 		typename RetVal = MethodInfo::RetVal, \
@@ -270,9 +270,9 @@ struct LuaCallbacks
 	//=============================================================================================
 
 
-	template <CLASS_SIGNATURE(MethodType, VOID_RETURN, HAVE_ARGS)>
+	template <CLASS_SIGNATURE(MethodType, NO_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
-	{
+	{		
 		CLASS_FUNCTION_BODY;
 
 		func_impl_class_method<MethodType, MethodName>::call(a, script);
@@ -281,7 +281,7 @@ struct LuaCallbacks
 	}
 
 
-	template <CLASS_SIGNATURE(MethodType, NO_VOID_RETURN, HAVE_ARGS)>	
+	template <CLASS_SIGNATURE(MethodType, HAVE_RETURN, HAVE_ARGS)>	
 	static int function(lua_State *L)
 	{
 		CLASS_FUNCTION_BODY;
@@ -292,17 +292,17 @@ struct LuaCallbacks
 	}
 
 
-	template <CLASS_SIGNATURE(MethodType, VOID_RETURN, NO_ARGS)>		
+	template <CLASS_SIGNATURE(MethodType, NO_RETURN, NO_ARGS)>
 	static int function(lua_State *L)
 	{
 		CLASS_FUNCTION_BODY;
-
+		
 		(a->*MethodName)();
 
 		return script->GetFnReturnValueCount();
 	}
 
-	template <CLASS_SIGNATURE(MethodType, NO_VOID_RETURN, NO_ARGS)>		
+	template <CLASS_SIGNATURE(MethodType, HAVE_RETURN, NO_ARGS)>
 	static int function(lua_State *L)
 	{
 		CLASS_FUNCTION_BODY;
@@ -318,7 +318,7 @@ struct LuaCallbacks
 
 	
 
-	template <METHOD_SIGNATURE(MethodType, VOID_RETURN, HAVE_ARGS)>
+	template <METHOD_SIGNATURE(MethodType, NO_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
@@ -329,7 +329,7 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
-	template <METHOD_SIGNATURE(MethodType, NO_VOID_RETURN, HAVE_ARGS)>
+	template <METHOD_SIGNATURE(MethodType, HAVE_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{
 
@@ -341,7 +341,7 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
-	template <METHOD_SIGNATURE(MethodType, VOID_RETURN, NO_ARGS)>	
+	template <METHOD_SIGNATURE(MethodType, NO_RETURN, NO_ARGS)>	
 	static int function(lua_State *L)
 	{
 
@@ -353,7 +353,7 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
-	template <METHOD_SIGNATURE(MethodType, NO_VOID_RETURN, NO_ARGS)>		
+	template <METHOD_SIGNATURE(MethodType, HAVE_RETURN, NO_ARGS)>
 	static int function(lua_State *L)
 	{
 
@@ -365,8 +365,29 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
+	//=============================================================================================
+	// Attribute callbacks
+	//=============================================================================================
+	template <typename T, class ClassType, T ClassType::*MemPtr>
+	static int getAttr(lua_State *L)
+	{
+		ClassType *a = LuaCallbacks::GetPtr<ClassType>(L, 1);
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+		script->Reset();
+		script->IncStack();
+				
+		script->AddFnReturnValue(a->*MemPtr);
+
+		return script->GetFnReturnValueCount();		
+	}
+	
 
 	
+	//=============================================================================================
+	// Other methods
+	//=============================================================================================
+
+
 //protected:
 
 	static std::unordered_map<MyConstString, std::function<void*(Lua::LuaScript *)> > ctors;
@@ -375,6 +396,8 @@ struct LuaCallbacks
 	template <typename T>
 	static T * GetPtr(lua_State *L, int narg)
 	{
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+		script->PrintStack("GetPTR");
 
 		int argType = lua_type(L, narg);
 
@@ -402,7 +425,7 @@ struct LuaCallbacks
 		}
 		else
 		{
-			MY_LOG_ERROR("Type ad the stack top is not LUA_TUSERDATA OR LUA_TLIGHTUSERDATA");
+			MY_LOG_ERROR("Type at the stack top is not LUA_TUSERDATA OR LUA_TLIGHTUSERDATA");
 			return NULL;
 		}
 	}
@@ -410,18 +433,79 @@ struct LuaCallbacks
 	template <typename T>
 	static int create_new(lua_State *L)
 	{
-
-		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));
-		
 		std::function<void*(Lua::LuaScript *)> f = LuaCallbacks::ctors[MyConstString(typeid(T).name())];
 
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
-		T * newInstance = static_cast<T *>(f(script));
-		*udata = newInstance;
+		
+		/*
+		lua_newtable(L); //mt1
+		
+		// push a temporary variable into the imt
+		lua_pushstring(L, "instancevar");
+		lua_pushnumber(L, 0.5);
+		lua_settable(L, -3);
 
+		// set mt1.__index = mt1
+		lua_pushstring(L, "__index");
+		lua_pushvalue(L, -2);
+		lua_settable(L, -3);
+
+		// set mt1.__newindex = mt1
+		lua_pushstring(L, "__newindex");
+		lua_pushvalue(L, -2);
+		lua_settable(L, -3);
+
+				
+		// get class metatable (mt2) & assign to instance metatable (mt1)
 		luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
+		lua_setmetatable(L, -2);		// setmetatable(mt1, mt2)
+
+		//luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
+		//lua_insert(L, 1);
+		//lua_setmetatable(L, -2);		// setmetatable(mt2, mt1)
+
+		MyStringAnsi atrName = lua_tostring(L, lua_upvalueindex(1));
+		atrName += "_attrs";
+		
+		
+
+		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));				
+		*udata = static_cast<T *>(f(script));
+		
+		//script->PrintStack("Bef");
+		lua_insert(L, 1);				
+		//script->PrintStack("Aft");
+		lua_setmetatable(L, -2);		// setmetatable(udata, mt1)
+		script->PrintStack("Aft3");
+
+		//luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
+		//lua_setmetatable(L, -2);		// setmetatable(udata, mt2)
+
+		*/
+
+
+		
+		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));		
+		*udata = static_cast<T *>(f(script));
+		printf("New daza: %p %p\n", udata, *udata);
+		
+				
+		luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));		
+		script->PrintStack("MT2");
+
+		//put the "pointer to data" into "arguments" table
+		lua_pushstring(L, "__parent");
+		lua_pushlightuserdata(L, *udata);
+		lua_settable(L, -3);
+
+
 		lua_setmetatable(L, -2);
+		
+		script->PrintStack("New user data");
+
+		
+
 		return 1;
 
 	}
@@ -457,6 +541,55 @@ struct LuaCallbacks
 		return 1;
 	}
 
+
+	template <typename T>
+	static int new_index(lua_State *L)
+	{
+		T *a = LuaCallbacks::GetPtr<T>(L, 1);
+
+		int metatable = lua_getmetatable(L, 2);
+		if (lua_isnumber(L, 3)) 
+		{
+			int v = lua_tointeger(L, 3);
+			printf("cislo ");
+		}
+		
+
+		printf("new index...\n");
+		return 0;
+	}
+
+	static int tmp(lua_State * L);
+
+	template <typename T>
+	static int index(lua_State *L)
+	{
+		return tmp(L);
+		printf("GET INDEX\n");
+		return 0;
+		const char * keyName = luaL_checkstring(L, -1);		
+		
+		luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
+		
+		lua_getfield(L, -1, keyName);
+
+		lua_CFunction getArg = (lua_CFunction)lua_touserdata(L, -1);
+		
+		
+
+		if (getArg == NULL)
+		{
+			printf("????");
+			return 1;
+		}
+		lua_pop(L, 1);
+		lua_pop(L, 1);
+		
+					
+		getArg(L);
+	
+		return 1;
+	}
 
 };
 

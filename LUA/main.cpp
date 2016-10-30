@@ -40,13 +40,27 @@
 //=================================================================================================
 //=================================================================================================
 
+class Account2 {
+public:
+
+	Account2(double balance) { m2 = 30; m_balance = balance; }
+	void deposit2(double amount) { m_balance += amount + m2; }
+	void withdraw2(double amount) { m_balance -= amount; }
+	double balance2(void) { return m_balance; }
+	void Print0() { printf("Account2 EMPTY\n"); }
+private:
+	double m_balance;
+	double m2;
+};
 
 class Account {
 public:
 	
 	double val = 148;
+	MyStringAnsi xx = "ahoj aatr";
+	Account2 * cc = new Account2(1);
 
-	Account(double balance) { m_balance = balance;  printf("AC\n"); }
+	Account(double balance) { m_balance = balance;; }
 	//Account(const Account & c) { m_balance = c.m_balance; printf("CC\n"); };
 	//Account(Account && c) {printf("MC\n"); };
 
@@ -106,18 +120,7 @@ private:
 	double m_balance;
 };
 
-class Account2 {
-public:
 
-	Account2(double balance) { m2 = 30; m_balance = balance; printf("AC2\n"); }
-	void deposit2(double amount) { m_balance += amount + m2; }
-	void withdraw2(double amount) { m_balance -= amount; }
-	double balance2(void) { return m_balance; }
-	void Print2() { printf("EMPTY\n"); }
-private:
-	double m_balance;
-	double m2;
-};
 
 //=============================================================================================
 //=============================================================================================
@@ -212,7 +215,7 @@ Lua::LuaScript * Create()
 	//http://loadcode.blogspot.cz/2007/02/wrapping-c-classes-in-lua.html
 	//https://john.nachtimwald.com/2014/07/12/wrapping-a-c-library-in-lua/
 
-	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript("t.lua", "t.lua");
+	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript("t2.lua", "t2.lua");
 	
 
 	//ls->RegisterFunction("Print_fce", NULL);
@@ -230,8 +233,13 @@ Lua::LuaScript * Create()
 	cb.AddMethod("deposit", CLASS_METHOD(Account, deposit));
 	cb.AddMethod("balance", CLASS_METHOD(Account, balance));
 	cb.ctor = [](Lua::LuaScript * script)  {
-		return new Account(script->GetFnInput<double>());
+		return new Account(script->GetFnInput<double>());		
 	};
+
+	cb.AddAttribute("vv", CLASS_ATTRIBUTE(Account, val));
+	cb.AddAttribute("xx", CLASS_ATTRIBUTE(Account, xx));
+	cb.AddAttribute("cc", CLASS_ATTRIBUTE(Account, cc));
+
 	/*
 	cb.toString = MyFunction<std::string, Account *>([](Account * a) -> std::string {
 		return "string...";
@@ -254,27 +262,65 @@ Lua::LuaScript * Create()
 	ls->RegisterFunction("Print_fce2", METHOD(HelloMethodParam));
 
 
-	/*
-	LuaClass::ClassBind<Account2> cb2;
+	
+	Lua::LuaClassBind<Account2> cb2;
 	cb2.className = "Account2";
-	cb2.AddMethod("deposit2", LuaClass::function<Account2, void (Account2::*)(double), &Account2::deposit2, double>);
-	cb2.AddMethod("withdraw2", LuaClass::function<Account2, void (Account2::*)(double), &Account2::withdraw2, double>);
-	cb2.AddMethod("balance2", LuaClass::function2<Account2, double (Account2::*)(), &Account2::balance2>);
-	cb2.ctor = [](MyUtils::LuaScript * script) {
+	cb2.AddMethod("PrintX", CLASS_METHOD(Account2, Print0));
+	cb2.ctor = [](Lua::LuaScript * script) {
 		return new Account2(script->GetFnInput<double>());
 	};
 
-	LuaClass::Register<Account2>(L, cb2);
-	*/
+	//ls->RegisterClass<Account2>(cb2);
+	
 
 	return ls;
 }
 
+struct MyClass
+{
+	int i;
+	char c;
+};
+
+
+template<typename T, class C, T C::*MemPtr>
+void doSomething(MyClass * cl)
+{
+	(cl->*MemPtr)++;
+}
+
+/*
+template <class MT>
+struct arg_info;
+
+template <class T, class Res, typename M>
+struct arg_info<Res T::*MemPtr>
+{
+	typedef M MemPtr;
+	typedef T ClassType;
+	typedef Res RetVal;	
+};
+*/
+
+template<typename T, T t>
+void doSomething2()
+{
+	//(cl->*MemPtr)++;
+}
 
 
 int main(int argc, char * argv[])
 {
-			
+	/*
+	MyClass cl;
+	cl.i = 7;
+	//arg_info<decltype(MyClass::i)> o();
+	doSomething2<&MyClass::i>();
+	doSomething<decltype(MyClass::i), MyClass, &MyClass::i>(&cl);
+
+
+	return 0;
+	*/
 	srand(time(NULL));
 
 	const int COUNT = 1000000;
@@ -311,18 +357,15 @@ int main(int argc, char * argv[])
 	//luaMem = aa;
 
 	
-	Account* aa = new Account(900);
+	Account* ee = new Account(600);	
+	ls->SetGlobalVar("ee", ee);
 
-	Account ** udata = (Account **)lua_newuserdata(L, sizeof(Account *));
-	*udata = aa;
-	luaL_getmetatable(L, "Account");
-	lua_setmetatable(L, -2);
-	lua_setglobal(L, "bb");
-
-	ls->SetGlobalVar("cc", aa);
+	Account* cc = new Account(900);
+	ls->SetGlobalVarLight("cc", cc);
 
 	ls->Run();
-	printf("BBB %f BBB\n", aa->balance());
+	printf("BBB %f BBB\n", cc->balance());
+	printf("BBB %f BBB\n", ee->balance());
 	return 0;
 	/*
 	//ls->RegisterFunction("LUA_Test", LUA_Test);		

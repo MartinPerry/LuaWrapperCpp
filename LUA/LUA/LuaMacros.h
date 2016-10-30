@@ -4,8 +4,12 @@
 //=============================================================================================
 // Compilation defines
 
+//Enable more type checking when getting pointer from Lua
+//However, this is a bit slower then unsafe version without checks
 #define SAFE_PTR_CHECKS	1
-#define INLINE FORCE_INLINE
+
+
+#define LUA_INLINE FORCE_INLINE
 
 
 //=============================================================================================
@@ -16,5 +20,8 @@
 
 #define METHOD(MethodName) \
 	LuaCallbacks::function<decltype(&MethodName), &MethodName>
+
+#define CLASS_ATTRIBUTE(ClassName, AttrName) \
+	LuaCallbacks::getAttr<decltype(ClassName::AttrName), ClassName, &ClassName::AttrName>
 
 #endif
