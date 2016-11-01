@@ -39,87 +39,7 @@
 //=================================================================================================
 //=================================================================================================
 //=================================================================================================
-
-class Account2 {
-public:
-
-	Account2(double balance) { m2 = 30; m_balance = balance; }
-	void deposit2(double amount) { m_balance += amount + m2; }
-	void withdraw2(double amount) { m_balance -= amount; }
-	double balance2(void) { return m_balance; }
-	void Print0() { printf("Account2 EMPTY\n"); }
-private:
-	double m_balance;
-	double m2;
-};
-
-class Account {
-public:
-	
-	double val = 148;
-	MyStringAnsi xx = "ahoj aatr";
-	Account2 * cc = new Account2(1);
-	//Account * cc = new Account(1);
-
-	Account(double balance) { m_balance = balance;; }
-	//Account(const Account & c) { m_balance = c.m_balance; printf("CC\n"); };
-	//Account(Account && c) {printf("MC\n"); };
-
-	void deposit(double amount) { m_balance += amount; }
-	void withdraw(double amount) { m_balance -= amount; }
-	double balance(void) 
-	{ 
-		return m_balance; 
-	}
-	double balance2(int s) { printf("MUL: %i\n", s); return s * m_balance; }
-	void Print0() 
-	{ 
-		printf("STR0: EMPTY\n"); 
-	}
-	void Print1(const short& xx) 
-	{ 
-		printf("STR1: EMPTY %i\n", xx); 	
-	}
-
-	void Print2(MyStringAnsi tt, int ii, int jj) 
-	{ 
-		printf("STR2: %s %i %i\n", tt.c_str(), ii, jj); 
-	}
-
-	//void Print3(const MyStringAnsi & tt, int ii, int jj)
-	void Print3(const MyStringAnsi & tt, int ii, int jj)
-	{
-		printf("STR3: %s %i %i\n", tt.c_str(), ii, jj);
-	}
-
-	int Print4()
-	{
-		printf("STR4\n");
-		return 5;
-	}
-
-	int Print5(int x)
-	{
-		printf("STR5 %i\n", x);
-		return x + 5;
-	}
-
-	
-	void Print6(Account * c)
-	{
-		c->m_balance *= -1;
-		printf("STR6: %f\n", c->m_balance);
-	}
-
-	void Print7(Account & c)
-	{
-		c.m_balance *=- 1;
-		printf("STR7: %f\n", c.m_balance);
-	}
-
-private:
-	double m_balance;
-};
+#include "./TestClass.h"
 
 
 
@@ -221,8 +141,7 @@ Lua::LuaScript * Create()
 
 	//ls->RegisterFunction("Print_fce", NULL);
 	
-	Lua::LuaClassBind<Account> cb;
-	cb.className = "Account";		
+	Lua::LuaClassBind<Account> cb("Account");
 	cb.AddMethod("Print0", CLASS_METHOD(Account, Print0));
 	cb.AddMethod("Print1", CLASS_METHOD(Account, Print1));
 	cb.AddMethod("Print2", CLASS_METHOD(Account, Print2));
@@ -264,9 +183,8 @@ Lua::LuaScript * Create()
 
 
 	
-	Lua::LuaClassBind<Account2> cb2;
-	cb2.className = "Account2";
-	cb2.AddMethod("PrintX", CLASS_METHOD(Account2, Print0));
+	Lua::LuaClassBind<Account2> cb2("Account2");	
+	cb2.AddMethod("Print0", CLASS_METHOD(Account2, Print0));
 	cb2.ctor = [](Lua::LuaScript * script) {
 		return new Account2(script->GetFnInput<double>());
 	};
@@ -359,14 +277,15 @@ int main(int argc, char * argv[])
 
 	
 	Account* ee = new Account(600);	
-	ls->SetGlobalVarClass("ee", ee, "Account");
+	//ls->SetGlobalVarClass("ee", ee);
 
 	Account* cc = new Account(900);
-	ls->SetGlobalVarLight("cc", cc);
+	//ls->SetGlobalVarLight("cc", cc);
 
 	ls->Run();
 	printf("BBB %f BBB\n", cc->balance());
 	printf("BBB %f BBB\n", ee->balance());
+	printf("---> %f\n", ee->val);
 	return 0;
 	/*
 	//ls->RegisterFunction("LUA_Test", LUA_Test);		

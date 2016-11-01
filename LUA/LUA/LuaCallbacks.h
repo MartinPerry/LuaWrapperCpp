@@ -11,7 +11,6 @@
 #include <string.h>
 
 
-#include "../Strings/MyConstString.h"
 
 #include "./LuaScript.h"
 #include "./LuaMacros.h"
@@ -369,19 +368,27 @@ struct LuaCallbacks
 	// Attribute callbacks
 	//=============================================================================================
 	template <typename T, class ClassType, T ClassType::*MemPtr>
-	static int getAttr(lua_State *L)
+	static int getSetAttr(lua_State *L, AttrCallType type)
 	{
 		ClassType *a = LuaCallbacks::GetPtr<ClassType>(L, 1);
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
 		script->IncStack();
-				
-		script->AddFnReturnValue(a->*MemPtr);
+			
+		if (type == AttrCallType::GET)
+		{
+			script->AddFnReturnValue(a->*MemPtr);
+		}
+		else if (type == AttrCallType::SET)
+		{
+			a->*MemPtr = script->GetFnInput<T>();
+		}
+		
 
 		return script->GetFnReturnValueCount();		
 	}
 	
-
+	
 	
 	//=============================================================================================
 	// Other methods
@@ -390,15 +397,16 @@ struct LuaCallbacks
 
 //protected:
 
-	static std::unordered_map<MyConstString, std::function<void*(Lua::LuaScript *)> > ctors;
-	static std::unordered_map<MyConstString, std::function<std::string(void *)>> toString;
+	static std::unordered_map<std::type_index, MyStringAnsi> tableName;
+	static std::unordered_map<std::type_index, std::function<void*(Lua::LuaScript *)> > ctors;
+	static std::unordered_map<std::type_index, std::function<std::string(void *)>> toString;
 
 	template <typename T>
 	static T * GetPtr(lua_State *L, int narg)
 	{
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->PrintStack("GetPTR");
-
+		
 		int argType = lua_type(L, narg);
 
 		if (argType == LUA_TUSERDATA)
@@ -430,63 +438,21 @@ struct LuaCallbacks
 		}
 	}
 
+	static int tmp3(lua_State * L);
+
 	template <typename T>
 	static int create_new(lua_State *L)
 	{
-		std::function<void*(Lua::LuaScript *)> f = LuaCallbacks::ctors[MyConstString(typeid(T).name())];
+		//return tmp3(L);
+
+		std::function<void*(Lua::LuaScript *)> f = LuaCallbacks::ctors[std::type_index(typeid(T))];
 
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
 
-		/*
-		lua_newtable(L); //mt1
-		
-		// push a temporary variable into the imt
-		lua_pushstring(L, "instancevar");
-		lua_pushnumber(L, 0.5);
-		lua_settable(L, -3);
-
-		// set mt1.__index = mt1
-		lua_pushstring(L, "__index");
-		lua_pushvalue(L, -2);
-		lua_settable(L, -3);
-
-		// set mt1.__newindex = mt1
-		lua_pushstring(L, "__newindex");
-		lua_pushvalue(L, -2);
-		lua_settable(L, -3);
-
-				
-		// get class metatable (mt2) & assign to instance metatable (mt1)
-		luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
-		lua_setmetatable(L, -2);		// setmetatable(mt1, mt2)
-
-		//luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
-		//lua_insert(L, 1);
-		//lua_setmetatable(L, -2);		// setmetatable(mt2, mt1)
-
-		MyStringAnsi atrName = lua_tostring(L, lua_upvalueindex(1));
-		atrName += "_attrs";
-		
-		
-
-		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));				
-		*udata = static_cast<T *>(f(script));
-		
-		//script->PrintStack("Bef");
-		lua_insert(L, 1);				
-		//script->PrintStack("Aft");
-		lua_setmetatable(L, -2);		// setmetatable(udata, mt1)
-		script->PrintStack("Aft3");
-
-		//luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
-		//lua_setmetatable(L, -2);		// setmetatable(udata, mt2)
-
-		*/
-
 		T * newData = static_cast<T *>(f(script));;
 						
-		LuaCallbacks::SetNewUserDataClass(L, newData, lua_tostring(L, lua_upvalueindex(1)));
+		LuaCallbacks::SetNewUserDataClass(L, newData);
 		
 		/*
 
@@ -517,19 +483,31 @@ struct LuaCallbacks
 	}
 
 	template <typename T>
-	LUA_INLINE static void SetNewUserDataClass(lua_State *L, T * val, const MyStringAnsi & className)
-	{
+	LUA_INLINE static void SetNewUserDataClass(lua_State *L, T * val)
+	{		
+		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+
+
+		const char * classTableName = LuaCallbacks::tableName[std::type_index(typeid(T))].c_str();
+
+		MyStringAnsi argsMetatable = classTableName;
+		argsMetatable += "_attrs";
+		const char * classArgsTableName = argsMetatable.c_str();
+
 		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));
 		*udata = val;
-
-		luaL_getmetatable(L, className.c_str());
-
-		//put the "pointer to data" into "arguments" table
+		printf("New data: %p %p\n", udata, *udata);
+		
+		//put the "pointer to data" into "arguments" table		
+		luaL_getmetatable(L, classArgsTableName);		
 		lua_pushstring(L, "__parent");
-		lua_pushlightuserdata(L, *udata);
-		lua_settable(L, -3);
-
-
+		lua_pushlightuserdata(L, *udata);				
+		lua_rawset(L, -3);
+					
+		lua_pop(L, 1);
+		
+		luaL_getmetatable(L, classTableName);
+		
 		lua_setmetatable(L, -2);
 	}
 
@@ -555,7 +533,7 @@ struct LuaCallbacks
 	static int to_string(lua_State *L)
 	{
 		T *a = LuaCallbacks::GetPtr<T>(L, 1);
-		std::function<std::string(void *)> f = LuaCallbacks::toString[MyConstString(typeid(T).name())];
+		std::function<std::string(void *)> f = LuaCallbacks::toString[std::type_index(typeid(T))];
 		if (f == nullptr)
 		{
 			lua_pushfstring(L, "[__tostring userdata = address: %p]", a);
@@ -567,53 +545,48 @@ struct LuaCallbacks
 		return 1;
 	}
 
+	static int tmp2(lua_State * L, const char * argsMetatableName);
 
 	template <typename T>
 	static int new_index(lua_State *L)
 	{
-		T *a = LuaCallbacks::GetPtr<T>(L, 1);
+		tmp2(L, lua_tostring(L, lua_upvalueindex(1)));
+		//T *a = LuaCallbacks::GetPtr<T>(L, 1);
 
-		int metatable = lua_getmetatable(L, 2);
-		if (lua_isnumber(L, 3)) 
-		{
-			int v = lua_tointeger(L, 3);
-			printf("cislo ");
-		}
-		
+				
 
-		printf("new index...\n");
+		//printf("new index...\n");
 		return 0;
 	}
 
-	static int tmp(lua_State * L);
+	static int tmp(lua_State * L, const char * argsMetatableName);
 
 	template <typename T>
 	static int index(lua_State *L)
 	{
-		return tmp(L);
-		printf("GET INDEX\n");
-		return 0;
-		const char * keyName = luaL_checkstring(L, -1);		
-		
-		luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));
-		
+		return tmp(L, lua_tostring(L, lua_upvalueindex(1)));
+
+		const char * argsMetatableName = lua_tostring(L, lua_upvalueindex(1));
+		const char * keyName = luaL_checkstring(L, -1);
+
+		luaL_getmetatable(L, argsMetatableName);
 		lua_getfield(L, -1, keyName);
+		getSetFunction getSetArg = (getSetFunction)lua_touserdata(L, -1);
 
-		lua_CFunction getArg = (lua_CFunction)lua_touserdata(L, -1);
-		
-		
-
-		if (getArg == NULL)
+		if (getSetArg == NULL)
 		{
 			printf("????");
 			return 1;
 		}
-		lua_pop(L, 1);
-		lua_pop(L, 1);
-		
-					
-		getArg(L);
-	
+
+		luaL_getmetatable(L, argsMetatableName); //set "arguments" metatable on stack top
+		lua_getfield(L, -1, "__parent"); //get "__parent" value on top
+
+		lua_insert(L, 1); //"put" "__parent" value on stack bottom
+		lua_settop(L, 1); //remove everything	except last value from stack
+
+		getSetArg(L, AttrCallType::GET);
+
 		return 1;
 	}
 

@@ -9,8 +9,8 @@ extern "C"
 	#include "./lua_lib/lauxlib.h"
 }
 
-
-#include "../Strings/MyConstString.h"
+#include <typeinfo>
+#include <typeindex>
 
 /*-----------------------------------------------------------
 Function:	Register
@@ -24,17 +24,26 @@ Register new lua binding for class
 template <typename T>
 void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 {
-	MyConstString key = MyConstString(typeid(T).name());
+	std::type_index key = std::type_index(typeid(T));
 
 	if (LuaCallbacks::ctors.find(key) != LuaCallbacks::ctors.end())
 	{
-		MY_LOG_ERROR("Class %s already registered", key.GetConstString());
+		MY_LOG_ERROR("Class %s already registered - std::type_index already exist", 
+			classBind.ctorName.c_str());
 		return;
 	}
 
+	const char * classTableName = classBind.ctorName.c_str();
+
+	MyStringAnsi argsMetatable = classTableName;
+	argsMetatable += "_attrs";
+	const char * classArgsTableName = argsMetatable.c_str();
+
 	LuaCallbacks::ctors[key] = classBind.ctor;
 	LuaCallbacks::toString[key] = classBind.toString;
+	LuaCallbacks::tableName[key] = classTableName;
 
+	this->returnLightUserData = classBind.returnLightUserData;
 
 	//http://cfc.kizzx2.com/index.php/binding-c-classes-to-lua-a-step-by-step-example-for-beginners/
 	//http://lua-users.org/lists/lua-l/2006-08/msg00245.html
@@ -43,26 +52,43 @@ void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 	lua_State * L = this->state;
 
 		
-	luaL_newmetatable(L, classBind.className.c_str());
+	luaL_newmetatable(L, classTableName); //mt2
 	int metaTableID = lua_gettop(L);
 
-	// Register the C functions _into_ the metatable we just created.
+
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -1, "__index");
+
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -1, "__newindex");
+
+	/*
+	lua_pushliteral(L, "__index");
+	lua_pushstring(L, classTableName);
+	lua_pushcclosure(L, LuaCallbacks::index<T>, 1);
+	lua_rawset(L, metaTableID);
+
+
+	lua_pushliteral(L, "__newindex");
+	lua_pushstring(L, classTableName);
+	lua_pushcclosure(L, LuaCallbacks::new_index<T>, 1);
+	lua_rawset(L, metaTableID);
+	*/
+
+	
+	//lua_pushstring(L, classBind.className.c_str());	
+	lua_pushcclosure(L, LuaCallbacks::create_new<T>, 0);
+	lua_setglobal(L, classBind.ctorName.c_str()); // this is how function will be named in Lua
+
+
+	// Register the C functions _into_ the metatable we just created.	
 #if (SAFE_PTR_CHECKS == 1)
-	lua_pushstring(L, classBind.className.c_str());
+	lua_pushstring(L, classTableName);
 	luaL_setfuncs(L, &classBind.methods[0], 1);
 #else
 	luaL_setfuncs(L, &classBind.methods[0], 0);
 #endif
-		
-	lua_pushvalue(L, -1);	
-	lua_setfield(L, -1, "__index");
-
-	//this->PrintStack("METATABLE");
-	
-	lua_pushstring(L, classBind.className.c_str());	
-	lua_pushcclosure(L, LuaCallbacks::create_new<T>, 1);
-	lua_setglobal(L, classBind.className.c_str()); // this is how function will be named in Lua
-	
+					
 	//double underscore variables
 	//http://nova-fusion.com/2011/06/30/lua-metatables-tutorial/
 	//http://stackoverflow.com/questions/10891957/difference-between-tables-and-metatables-in-lua
@@ -71,41 +97,40 @@ void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 	//rewrite __gc with our own
 	lua_pushliteral(L, "__gc");
 	lua_pushcfunction(L, LuaCallbacks::garbage_collect<T>);	
-	lua_settable(L, metaTableID);
+	lua_rawset(L, metaTableID);
 
 	
 
 	lua_pushliteral(L, "__tostring");
 #if (SAFE_PTR_CHECKS == 1)
-	lua_pushstring(L, classBind.className.c_str());	
+	lua_pushstring(L, classTableName);
 	lua_pushcclosure(L, LuaCallbacks::to_string<T>, 1);
 #else
 	lua_pushcclosure(L, LuaCallbacks::to_string<T>, 0);
 #endif
-	lua_settable(L, metaTableID);
+	lua_rawset(L, metaTableID);
 
 			
 	//return;
 	//---------------------------------------------------------------------
 
 	lua_pop(L, -1);
-	luaL_getmetatable(L, classBind.className.c_str());
-
-	MyStringAnsi argsMetatable = classBind.className;
-	argsMetatable += "_atrs";
-	luaL_newmetatable(L, argsMetatable.c_str()); //mt1
+	luaL_getmetatable(L, classTableName);
+	
+	luaL_newmetatable(L, classArgsTableName); //mt1
 	int tableID = lua_gettop(L);
-					 // push a temporary variable into the imt
-		
+					 
+	
 	lua_pushliteral(L, "__index");
-#if (SAFE_PTR_CHECKS == 1)	
-	lua_pushstring(L, argsMetatable.c_str());
+	lua_pushstring(L, classArgsTableName);
 	lua_pushcclosure(L, LuaCallbacks::index<T>, 1);
-#else
-	lua_pushcclosure(L, LuaCallbacks::index<T>, 0);
-#endif	
-	lua_settable(L, tableID);
+	lua_rawset(L, tableID);
 
+
+	lua_pushliteral(L, "__newindex");
+	lua_pushstring(L, classArgsTableName);
+	lua_pushcclosure(L, LuaCallbacks::new_index<T>, 1);
+	lua_rawset(L, tableID);
 	
 	// set mt1.__index = mt1
 	//lua_pushstring(L, "__index");
@@ -114,28 +139,19 @@ void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 	
 
 	// set mt1.__newindex = mt1
-	lua_pushstring(L, "__newindex");
-	lua_pushvalue(L, -2);
-	lua_settable(L, -3);
-
-	lua_setmetatable(L, -2);	// setmetatable(mt2, mt1)
+	//lua_pushstring(L, "__newindex");
+	//lua_pushvalue(L, -2);
+	//lua_settable(L, -3);
 
 
 	for (size_t i = 0; i < classBind.attrs.size() - 1; i++)
-	{
-		//lua_pushlightuserdata(L, classBind.attrs[i].func);
-		//lua_setfield(L, -2, classBind.attrs[i].name);
-
+	{		
 		lua_pushstring(L, classBind.attrs[i].name);
 		lua_pushlightuserdata(L, classBind.attrs[i].func);
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 	}
-
 	
-	//this->PrintStack("setmeta");
-	
-			
-			
+	lua_setmetatable(L, -2);	// setmetatable(mt2, mt1)					
 }
 
 
@@ -253,11 +269,14 @@ template <typename T>
 LUA_INLINE void LuaScript::AddFnReturnValue(T * val)
 {
 	this->returnValCount++;	
-
-	LuaCallbacks::SetNewUserDataClass(this->state, val, "Account");
-	//lua_pushlightuserdata(this->state, static_cast<void *>(val));
-	this->PrintStack("xxxx");
-	
+	if (this->returnLightUserData == false)
+	{
+		LuaCallbacks::SetNewUserDataClass(this->state, val);
+	}
+	else
+	{
+		lua_pushlightuserdata(this->state, static_cast<void *>(val));
+	}
 };
 
 LUA_INLINE void LuaScript::AddFnReturnValue(bool val)
@@ -303,11 +322,10 @@ LUA_INLINE void LuaScript::AddFnReturnValue(const MyStringAnsi & val)
 
 
 template <typename T>
-LUA_INLINE void LuaScript::SetGlobalVarClass(const MyStringAnsi & varName, T * val, 
-	const MyStringAnsi & className = typeid(T).name())
+LUA_INLINE void LuaScript::SetGlobalVarClass(const MyStringAnsi & varName, T * val)
 {	
 	
-	LuaCallbacks::SetNewUserDataClass(this->state, val, className);
+	LuaCallbacks::SetNewUserDataClass<T>(this->state, val);
 	
 	lua_setglobal(this->state, varName.GetConstString());
 };

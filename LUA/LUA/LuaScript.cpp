@@ -27,7 +27,7 @@ LuaScript::LuaScript(lua_State * state, const MyStringAnsi & scriptName, const M
 
 	this->runCount = 0;
 
-	
+	this->returnLightUserData = false;
 	//this->GetAllSavedVariables();
 
 }

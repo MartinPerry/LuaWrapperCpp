@@ -22,6 +22,22 @@
 	LuaCallbacks::function<decltype(&MethodName), &MethodName>
 
 #define CLASS_ATTRIBUTE(ClassName, AttrName) \
-	LuaCallbacks::getAttr<decltype(ClassName::AttrName), ClassName, &ClassName::AttrName>
+	LuaCallbacks::getSetAttr<decltype(ClassName::AttrName), ClassName, &ClassName::AttrName>
+
+
+
+//=============================================================================================
+// Other stcrutures
+
+typedef enum AttrCallType { GET, SET } AttrCallType;
+
+typedef int(*getSetFunction) (lua_State *L, AttrCallType type);
+
+typedef struct luaL_RegAttr {
+	const char *name;
+	getSetFunction func;
+} luaL_RegAttr;
+
+
 
 #endif

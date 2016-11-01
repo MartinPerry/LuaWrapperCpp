@@ -13,6 +13,10 @@ extern "C"
 
 #include <string>
 #include <functional>
+#include <typeindex>
+#include <typeinfo>
+
+#include "./LuaMacros.h"
 
 #include "../Strings/MyStringAnsi.h"
 
@@ -22,19 +26,26 @@ namespace Lua
 	template <typename T>
 	struct LuaClassBind
 	{
-		MyStringAnsi className;
+		const std::type_index typeIndex;		
+		const MyStringAnsi ctorName;
+
+		bool returnLightUserData;
+
 		std::function<void*(LuaScript *)> ctor;
 		std::function<std::string(void *)> toString;
 
 		std::vector<luaL_Reg> methods;
-		std::vector<luaL_Reg> attrs;
+		std::vector<luaL_RegAttr> attrs;
+		
 
 
-
-		LuaClassBind() : className(typeid(T).name())
+		LuaClassBind(const MyStringAnsi & ctorName) :
+			typeIndex(std::type_index(typeid(T))),			
+			ctorName(ctorName)
 		{
 			methods.push_back({ 0,0 });
 			attrs.push_back({ 0, 0 });
+			returnLightUserData = false;
 			
 		}
 
@@ -55,7 +66,7 @@ namespace Lua
 			methods.push_back({ 0,0 });
 		};
 
-		void AddAttribute(const MyStringAnsi & name, lua_CFunction f)
+		void AddAttribute(const MyStringAnsi & name, getSetFunction f)
 		{
 			name.FillString(attrs[attrs.size() - 1].name);
 			attrs[attrs.size() - 1].func = f;

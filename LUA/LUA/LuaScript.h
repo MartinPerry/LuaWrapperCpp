@@ -119,7 +119,7 @@ namespace Lua
 			//=============================================================================
 
 			template <typename T>
-			void SetGlobalVarClass(const MyStringAnsi & varName, T * val, const MyStringAnsi & className);
+			void SetGlobalVarClass(const MyStringAnsi & varName, T * val);
 
 			template <typename T>
 			void SetGlobalVarLight(const MyStringAnsi & varName, T * val);
@@ -156,7 +156,7 @@ namespace Lua
 			MyStringAnsi scriptName;
 			MyStringAnsi scriptFileName;
 			int runCount;
-
+			bool returnLightUserData;
 
 			int stackPtr;
 			int returnValCount;

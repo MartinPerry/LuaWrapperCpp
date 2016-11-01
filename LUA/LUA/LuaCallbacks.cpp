@@ -1,30 +1,8 @@
 #include "./LuaCallbacks.h"
 
-std::unordered_map<MyConstString, std::function<void*(Lua::LuaScript *)> > LuaCallbacks::ctors;
-std::unordered_map<MyConstString, std::function<std::string(void *)> > LuaCallbacks::toString;
-
-
-static void stackDump(lua_State *L) {
-	int i = lua_gettop(L);
-	printf(" ----------------  Stack Dump ----------------\n");
-	while (i) {
-		int t = lua_type(L, i);
-		switch (t) {
-		case LUA_TSTRING:
-			printf("%d:'%s'\n", i, lua_tostring(L, i));
-			break;
-		case LUA_TBOOLEAN:
-			printf("%d: %s\n", i, lua_toboolean(L, i) ? "true" : "false");
-			break;
-		case LUA_TNUMBER:
-			printf("%d: %g\n", i, lua_tonumber(L, i));
-			break;		
-		default: printf("%d: %s\n", i, lua_typename(L, t)); break;
-		}
-		i--;
-	}
-	printf("--------------- Stack Dump Finished ---------------\n");
-}
+std::unordered_map<std::type_index, MyStringAnsi > LuaCallbacks::tableName;
+std::unordered_map<std::type_index, std::function<void*(Lua::LuaScript *)> > LuaCallbacks::ctors;
+std::unordered_map<std::type_index, std::function<std::string(void *)> > LuaCallbacks::toString;
 
 
 static void iterate_and_print(lua_State *L, int index)
@@ -56,38 +34,133 @@ static void iterate_and_print(lua_State *L, int index)
 	// Stack is now the same as it was on entry to this function
 }
 
-int LuaCallbacks::tmp(lua_State * L)
+
+#include "../Strings/MyString.h"
+#include "../TestClass.h"
+
+int LuaCallbacks::tmp3(lua_State * L)
 {
-	//Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+	Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+
+
+	Account * newData = new Account(0);
+
 	
+	const char * classTableName = "Account";
+
+	MyStringAnsi argsMetatable = classTableName;
+	argsMetatable += "_attrs";
+	const char * classArgsTableName = argsMetatable.c_str();
+
+	Account ** udata = (Account **)lua_newuserdata(L, sizeof(Account *));
+	*udata = newData;
+
+
+	printf("New data: %p %p\n", udata, *udata);
+
+	//put the "pointer to data" into "arguments" table	
+	/*
+	luaL_getmetatable(L, classArgsTableName);
+	lua_pushstring(L, "__parent");
+	lua_pushlightuserdata(L, *udata);
+	lua_rawset(L, -3);
+
+	lua_pop(L, 1);
+	*/
+	
+	lua_settop(L, 0);
+
+	
+
+	
+
+	//lua_getmetatable(L, 1);
+
+	script->PrintStack("sss");
+
+	lua_newtable(L); //mt1
+	lua_pushstring(L, "__data");
+	lua_pushlightuserdata(L, *udata);
+	lua_settable(L, -3);
+
+	luaL_getmetatable(L, classTableName);
+	script->PrintStack("x");
+
+	lua_setmetatable(L, -2);
+
+	return 1;
+}
+
+
+int LuaCallbacks::tmp2(lua_State * L, const char * argsMetatableName)
+{
+	
+	Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+	
+	
+	lua_insert(L, 1);
+	
+
 	const char * keyName = luaL_checkstring(L, -1);
-	const char * argsMetatableName = lua_tostring(L, lua_upvalueindex(1));
-		
-	luaL_getmetatable(L, argsMetatableName);	
-	lua_getfield(L, -1, keyName);	
-	lua_CFunction getArg = (lua_CFunction)lua_touserdata(L, -1);
-	
-	if (getArg == NULL)
+
+	luaL_getmetatable(L, argsMetatableName);
+	lua_getfield(L, -1, keyName);
+	getSetFunction getSetArg = (getSetFunction)lua_touserdata(L, -1);
+
+	if (getSetArg == NULL)
 	{
 		printf("????");
 		return 1;
 	}
 
+
+	lua_settop(L, 1);
+	
+
+
 	luaL_getmetatable(L, argsMetatableName);
 	lua_getfield(L, -1, "__parent");
-	void *a = lua_touserdata(L, -1);
+	//void *a = lua_touserdata(L, -1);
 
-		
-	//script->PrintStack();	
-	lua_settop(L, 0); //clear stack
-		
-	lua_pushlightuserdata(L, a);
-	//lua_pushnumber(L, 126);
+	lua_insert(L, 1);	
+	lua_pop(L, 1);
 	
-	//script->PrintStack();
+	//lua_pushlightuserdata(L, a);
+	//lua_pushvalue(L, 1);
 
 	
-	getArg(L);
+
+	getSetArg(L, AttrCallType::SET);
+
+	return 0;
+}
+
+int LuaCallbacks::tmp(lua_State * L, const char * argsMetatableName)
+{
+	
+
+	Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+	script->PrintStack("xxxx");
+	
+	const char * keyName = luaL_checkstring(L, -1);
+		
+	luaL_getmetatable(L, argsMetatableName);	
+	lua_getfield(L, -1, keyName);	
+	getSetFunction getSetArg = (getSetFunction)lua_touserdata(L, -1);
+	
+	if (getSetArg == NULL)
+	{
+		printf("????");
+		return 1;
+	}
+
+	luaL_getmetatable(L, argsMetatableName); //set "arguments" metatable on stack top
+	lua_getfield(L, -1, "__parent"); //get "__parent" value on top
+
+	lua_insert(L, 1); //"put" "__parent" value on stack bottom
+	lua_settop(L, 1); //remove everything	except last value from stack
+	
+	getSetArg(L, AttrCallType::GET);
 	
 	
 

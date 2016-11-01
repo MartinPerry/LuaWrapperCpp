@@ -33,8 +33,29 @@ function print_r ( t )
     print()
 end
 
+--[=====[ 
+local mt = 
+{
+	__index = function (t, k)  -- {} an empty table, and after the comma, a custom function failsafe
+		print(t)
+		return "key doesn't exist"
+	end
+}
 
 
+local A = setmetatable({ a = 10}, mt)
+local B = setmetatable({ b = 10}, mt)
+
+print_r(A)
+print_r(getmetatable(A))
+
+
+print(A.a)
+print(A.c)
+print(B.c)
+
+os.exit()
+--]=====]
 
 local func_example = setmetatable(
 {
@@ -76,28 +97,44 @@ end
 
 
 a = Account(150)
-a:Print7(cc)
-a:Print7(ee)
-ee:Print0()
+
+--os.exit()
+--a:Print7(ee)
+
+--a:Print7(cc)
+--a:Print7(ee)
+--ee:Print0()
+
 print("xxxx")
 print(a)
 print(getmetatable(a))
 print(getmetatable(getmetatable(a)))
 print("xxxx")
---print("Table")
+--print_r(ee)
+--print_r(getmetatable(ee))
+--print_r(getmetatable(getmetatable(ee)))
+print("_____")
 print_r(a)
---print("Metatable")
 print_r(getmetatable(a))
 print_r(getmetatable(getmetatable(a)))
 print("_____")
-
+--os.exit()
 
 a:Print1(123);
-print(a.vv)
-print(a.cc)
---print(a.cc:PrintX())
 
+print("148 / " .. a.vv)
 
+os.exit()
+
+--print(a.cc)
+--print("----")
+--print(a.cc:Print0())
+--print(ee.vv)
+print("148 / " .. ee.vv)
+ee.vv = 55
+print("55 / " .. ee.vv)
+ee:Print0()
+print("77 / " .. ee.vv)
 --os.exit()
 
 --print(fallback_example.sy)
