@@ -94,15 +94,17 @@ print("_____")
 
 a:Print1(123);
 print(a.vv)
+print(a.cc)
+--print(a.cc:PrintX())
 
 
-os.exit()
+--os.exit()
 
-print(fallback_example.sy)
-print(fallback_example.k)
-print(fallback_example:add2(1,2))
-print(fallback_example.foo) --> bar
-print(fallback_example[123]) --> 456
-print(fallback_example[456]) --> key doesn't exist
+--print(fallback_example.sy)
+--print(fallback_example.k)
+--print(fallback_example:add2(1,2))
+--print(fallback_example.foo) --> bar
+--print(fallback_example[123]) --> 456
+--print(fallback_example[456]) --> key doesn't exist
 
 --os.exit()

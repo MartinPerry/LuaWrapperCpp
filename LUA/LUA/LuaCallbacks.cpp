@@ -58,52 +58,38 @@ static void iterate_and_print(lua_State *L, int index)
 
 int LuaCallbacks::tmp(lua_State * L)
 {
-	Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
-	//script->PrintStack("StartGetArg");
+	//Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+	
 	const char * keyName = luaL_checkstring(L, -1);
-	const char * metaTableName = lua_tostring(L, lua_upvalueindex(1));
-	const char * metaTableNameClass = lua_tostring(L, lua_upvalueindex(2));
-	printf("%s %s\n", metaTableName, metaTableNameClass);
-	luaL_getmetatable(L, metaTableName);
-	
-	lua_getfield(L, -1, keyName);
-	
+	const char * argsMetatableName = lua_tostring(L, lua_upvalueindex(1));
+		
+	luaL_getmetatable(L, argsMetatableName);	
+	lua_getfield(L, -1, keyName);	
 	lua_CFunction getArg = (lua_CFunction)lua_touserdata(L, -1);
-	//script->PrintStack("StartGetArg3");
-	//iterate_and_print(L, 1);
-
-	luaL_getmetatable(L, metaTableName);
-	lua_getfield(L, -1, "__parent");
-
-	void *a = lua_touserdata(L, -1);
-
+	
 	if (getArg == NULL)
 	{
 		printf("????");
 		return 1;
 	}
-	
-	script->PrintStack();
-	lua_pop(L, 1);
-	lua_pop(L, 1);
-	lua_pop(L, 1);
-	lua_pop(L, 1);
-	lua_pop(L, 1);
-	lua_pop(L, 1);
-	//luaL_getmetatable(L, metaTableNameClass);
-	//lua_gettable(L, 1);
 
-	//iterate_and_print(L, 1);
+	luaL_getmetatable(L, argsMetatableName);
+	lua_getfield(L, -1, "__parent");
+	void *a = lua_touserdata(L, -1);
+
+		
+	//script->PrintStack();	
+	lua_settop(L, 0); //clear stack
+		
 	lua_pushlightuserdata(L, a);
 	//lua_pushnumber(L, 126);
 	
-	script->PrintStack();
+	//script->PrintStack();
 
 	
 	getArg(L);
-	//void *a = lua_touserdata(L, 1);
-	void *b = LuaCallbacks::GetPtr<void *>(L, 1);
-	printf("==> %p %p\n", a, b);
+	
+	
 
 	return 1;
 }

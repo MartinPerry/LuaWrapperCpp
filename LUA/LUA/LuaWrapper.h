@@ -28,9 +28,7 @@ namespace Lua
 		LuaScript * GetScript(lua_State * state);
 		bool ExistScript(lua_State * state) const;
 		
-
-		void RegisterGlobalVariable(const MyStringAnsi & name, void * globalVar);
-
+		
 		LuaScript * AddScript(const MyStringAnsi & scriptName, const MyStringAnsi & scriptFileName);
 
 		void ReloadAll();

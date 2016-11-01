@@ -373,5 +373,38 @@ uint32 LuaScript::GetFnInputTableUnsigned(const MyStringAnsi & varName)
 
 
 
+//=============================================================================
+//===================== Set LUA global variable ===============================
+//=============================================================================
 
 
+
+LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, bool val)
+{
+	lua_pushboolean(this->state, val);
+	lua_setglobal(this->state, varName.GetConstString());
+};
+
+LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, float val)
+{
+	lua_pushnumber(this->state, val);
+	lua_setglobal(this->state, varName.GetConstString());
+};
+
+LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, double val)
+{
+	lua_pushnumber(this->state, val);
+	lua_setglobal(this->state, varName.GetConstString());
+};
+
+LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, const char * val)
+{
+	lua_pushstring(this->state, val);
+	lua_setglobal(this->state, varName.GetConstString());
+};
+
+LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, const MyStringAnsi & val)
+{
+	lua_pushstring(this->state, val.GetConstString());
+	lua_setglobal(this->state, varName.GetConstString());
+};

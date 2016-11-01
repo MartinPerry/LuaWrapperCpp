@@ -59,6 +59,7 @@ public:
 	double val = 148;
 	MyStringAnsi xx = "ahoj aatr";
 	Account2 * cc = new Account2(1);
+	//Account * cc = new Account(1);
 
 	Account(double balance) { m_balance = balance;; }
 	//Account(const Account & c) { m_balance = c.m_balance; printf("CC\n"); };
@@ -358,7 +359,7 @@ int main(int argc, char * argv[])
 
 	
 	Account* ee = new Account(600);	
-	ls->SetGlobalVar("ee", ee);
+	ls->SetGlobalVarClass("ee", ee, "Account");
 
 	Account* cc = new Account(900);
 	ls->SetGlobalVarLight("cc", cc);

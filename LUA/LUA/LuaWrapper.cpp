@@ -77,10 +77,6 @@ LuaScript * LuaWrapper::GetScript(lua_State * state)
 
 
 
-void LuaWrapper::RegisterGlobalVariable(const MyStringAnsi & name, void * globalVar)
-{
-	this->globalVariales.insert(std::make_pair(name, globalVar));
-}
 
 LuaScript * LuaWrapper::AddScript(const MyStringAnsi & scriptName, const MyStringAnsi & scriptFileName)
 {
@@ -102,11 +98,13 @@ LuaScript * LuaWrapper::AddScript(const MyStringAnsi & scriptName, const MyStrin
 
 	LuaScript * ls = new LuaScript(state, scriptName, scriptFileName);
 	
+	/*
 	std::unordered_map<MyStringAnsi, void * >::const_iterator it;
 	for (it = this->globalVariales.begin(); it != this->globalVariales.end(); it++)
 	{
 		ls->SetGlobalVar(it->first, it->second);
 	}
+	*/
 
 	this->luaScripts.insert(std::make_pair(state, ls));
 

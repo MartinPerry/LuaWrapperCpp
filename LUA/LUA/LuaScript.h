@@ -119,7 +119,7 @@ namespace Lua
 			//=============================================================================
 
 			template <typename T>
-			void SetGlobalVar(const MyStringAnsi & varName, T * val);
+			void SetGlobalVarClass(const MyStringAnsi & varName, T * val, const MyStringAnsi & className);
 
 			template <typename T>
 			void SetGlobalVarLight(const MyStringAnsi & varName, T * val);
@@ -148,8 +148,7 @@ namespace Lua
 
 
 			friend class LuaWrapper;
-			//friend class LuaCallbacks;
-
+			
 			
 
 		private:
@@ -173,7 +172,7 @@ namespace Lua
 
 			std::vector<MyStringAnsi> GetAllGlobals();
 
-
+			
 			//=============================================================================
 			//===================== Get data passed from Lua callback function ================================
 			//=============================================================================

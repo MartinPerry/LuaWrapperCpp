@@ -437,7 +437,7 @@ struct LuaCallbacks
 
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
-		
+
 		/*
 		lua_newtable(L); //mt1
 		
@@ -484,13 +484,19 @@ struct LuaCallbacks
 
 		*/
 
+		T * newData = static_cast<T *>(f(script));;
+						
+		LuaCallbacks::SetNewUserDataClass(L, newData, lua_tostring(L, lua_upvalueindex(1)));
+		
+		/*
 
 		
-		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));		
-		*udata = static_cast<T *>(f(script));
+
+
+		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));
+		*udata = newData;
 		printf("New daza: %p %p\n", udata, *udata);
-		
-				
+
 		luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));		
 		script->PrintStack("MT2");
 
@@ -503,12 +509,32 @@ struct LuaCallbacks
 		lua_setmetatable(L, -2);
 		
 		script->PrintStack("New user data");
-
+		*/
 		
 
 		return 1;
 
 	}
+
+	template <typename T>
+	LUA_INLINE static void SetNewUserDataClass(lua_State *L, T * val, const MyStringAnsi & className)
+	{
+		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));
+		*udata = val;
+
+		luaL_getmetatable(L, className.c_str());
+
+		//put the "pointer to data" into "arguments" table
+		lua_pushstring(L, "__parent");
+		lua_pushlightuserdata(L, *udata);
+		lua_settable(L, -3);
+
+
+		lua_setmetatable(L, -2);
+	}
+
+
+
 
 	template <typename T>
 	static int garbage_collect(lua_State *L)
