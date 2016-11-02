@@ -404,8 +404,8 @@ struct LuaCallbacks
 	template <typename T>
 	static T * GetPtr(lua_State *L, int narg)
 	{
-		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
-		script->PrintStack("GetPTR");
+		//Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+		//script->PrintStack("GetPTR");
 		
 		int argType = lua_type(L, narg);
 
@@ -438,6 +438,8 @@ struct LuaCallbacks
 		}
 	}
 
+	static int tmp2(lua_State * L, const char * argsMetatableName);
+	static int tmp(lua_State * L, const char * argsMetatableName);
 	static int tmp3(lua_State * L);
 
 	template <typename T>
@@ -454,30 +456,6 @@ struct LuaCallbacks
 						
 		LuaCallbacks::SetNewUserDataClass(L, newData);
 		
-		/*
-
-		
-
-
-		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));
-		*udata = newData;
-		printf("New daza: %p %p\n", udata, *udata);
-
-		luaL_getmetatable(L, lua_tostring(L, lua_upvalueindex(1)));		
-		script->PrintStack("MT2");
-
-		//put the "pointer to data" into "arguments" table
-		lua_pushstring(L, "__parent");
-		lua_pushlightuserdata(L, *udata);
-		lua_settable(L, -3);
-
-
-		lua_setmetatable(L, -2);
-		
-		script->PrintStack("New user data");
-		*/
-		
-
 		return 1;
 
 	}
@@ -485,27 +463,25 @@ struct LuaCallbacks
 	template <typename T>
 	LUA_INLINE static void SetNewUserDataClass(lua_State *L, T * val)
 	{		
-		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
+		//Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 
-
-		const char * classTableName = LuaCallbacks::tableName[std::type_index(typeid(T))].c_str();
-
-		MyStringAnsi argsMetatable = classTableName;
-		argsMetatable += "_attrs";
-		const char * classArgsTableName = argsMetatable.c_str();
 
 		T ** udata = (T **)lua_newuserdata(L, sizeof(T *));
 		*udata = val;
-		printf("New data: %p %p\n", udata, *udata);
+		//printf("New data: %p %p\n", udata, *udata);
 		
-		//put the "pointer to data" into "arguments" table		
+		//put the "pointer to data" into "arguments" table	
+		/*
 		luaL_getmetatable(L, classArgsTableName);		
 		lua_pushstring(L, "__parent");
 		lua_pushlightuserdata(L, *udata);				
 		lua_rawset(L, -3);
 					
 		lua_pop(L, 1);
-		
+		*/
+
+		const char * classTableName = LuaCallbacks::tableName[std::type_index(typeid(T))].c_str();
+
 		luaL_getmetatable(L, classTableName);
 		
 		lua_setmetatable(L, -2);
@@ -545,48 +521,54 @@ struct LuaCallbacks
 		return 1;
 	}
 
-	static int tmp2(lua_State * L, const char * argsMetatableName);
-
+	
 	template <typename T>
 	static int new_index(lua_State *L)
 	{
-		tmp2(L, lua_tostring(L, lua_upvalueindex(1)));
-		//T *a = LuaCallbacks::GetPtr<T>(L, 1);
+		//tmp2(L, lua_tostring(L, lua_upvalueindex(1)));
+		
+		const char * metatableName = lua_tostring(L, lua_upvalueindex(1));
 
-				
-
-		//printf("new index...\n");
-		return 0;
-	}
-
-	static int tmp(lua_State * L, const char * argsMetatableName);
-
-	template <typename T>
-	static int index(lua_State *L)
-	{
-		return tmp(L, lua_tostring(L, lua_upvalueindex(1)));
-
-		const char * argsMetatableName = lua_tostring(L, lua_upvalueindex(1));
+		lua_insert(L, 1);
+		
 		const char * keyName = luaL_checkstring(L, -1);
 
-		luaL_getmetatable(L, argsMetatableName);
+		luaL_getmetatable(L, metatableName);
 		lua_getfield(L, -1, keyName);
 		getSetFunction getSetArg = (getSetFunction)lua_touserdata(L, -1);
 
 		if (getSetArg == NULL)
-		{
-			printf("????");
+		{			
 			return 1;
 		}
 
-		luaL_getmetatable(L, argsMetatableName); //set "arguments" metatable on stack top
-		lua_getfield(L, -1, "__parent"); //get "__parent" value on top
 
-		lua_insert(L, 1); //"put" "__parent" value on stack bottom
-		lua_settop(L, 1); //remove everything	except last value from stack
+		lua_settop(L, 2);  //remove everything	except last 2 values from stack
+		lua_insert(L, 1);  //"put" stack top value on stack bottom
 
-		getSetArg(L, AttrCallType::GET);
+		getSetArg(L, AttrCallType::SET);
 
+		return 0;
+	}
+	
+	template <typename T>
+	static int index(lua_State *L)
+	{
+		//return tmp(L, lua_tostring(L, lua_upvalueindex(1)));
+
+		const char * metatableName = lua_tostring(L, lua_upvalueindex(1));
+		const char * keyName = luaL_checkstring(L, -1);
+
+		luaL_getmetatable(L, metatableName); //set metatable on stack top
+		lua_getfield(L, -1, keyName); //get "keyName" value on top
+		getSetFunction getSetArg = (getSetFunction)lua_touserdata(L, -1);
+
+		if (getSetArg != NULL)
+		{
+			getSetArg(L, AttrCallType::GET);
+		}
+
+		
 		return 1;
 	}
 

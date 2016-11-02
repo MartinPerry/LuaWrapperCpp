@@ -63,6 +63,7 @@ sy = "y"
 }, 
 {
 	__index = function (t, k)  -- {} an empty table, and after the comma, a custom function failsafe
+		 print(debug.traceback())
 		return "key doesn't exist"
 	end
 }
@@ -108,7 +109,6 @@ a = Account(150)
 print("xxxx")
 print(a)
 print(getmetatable(a))
-print(getmetatable(getmetatable(a)))
 print("xxxx")
 --print_r(ee)
 --print_r(getmetatable(ee))
@@ -116,15 +116,15 @@ print("xxxx")
 print("_____")
 print_r(a)
 print_r(getmetatable(a))
-print_r(getmetatable(getmetatable(a)))
 print("_____")
 --os.exit()
 
 a:Print1(123);
 
 print("148 / " .. a.vv)
+a.vv = 44
+print("44 / " .. a.vv)
 
-os.exit()
 
 --print(a.cc)
 --print("----")

@@ -20,11 +20,21 @@
 #include <tuple>
 #include <vector>
 
+#ifdef LUA_INTF
+#include <LuaIntf/LuaIntf.h>
+#endif
+
+//=================================================================================================
+//=================================================================================================
+//=================================================================================================
+
+#define START t1 = chrono::high_resolution_clock::now()
+#define END t2 = chrono::high_resolution_clock::now()
+#define PRINT_TIME cout << "Time: " << std::chrono::duration_cast<chrono::milliseconds>(t2 - t1).count() << " ms" << endl
+#define ANTI_OPTIMALIZATION double sum = 0; for (int i = 0; i < ARR_SIZE; i++) { sum += res[i]; } cout << "Array sum = " << sum << endl;
+#define RESET_ARRAY for (int i = 0; i < ARR_SIZE; i++) { res[i] = 0;}
 
 
-//=================================================================================================
-//=================================================================================================
-//=================================================================================================
 
 
 //=================================================================================================
@@ -131,12 +141,12 @@ void luaW_printstack(lua_State* L)
 
 
 
-Lua::LuaScript * Create()
+Lua::LuaScript * Create(MyStringAnsi name)
 {
 	//http://loadcode.blogspot.cz/2007/02/wrapping-c-classes-in-lua.html
 	//https://john.nachtimwald.com/2014/07/12/wrapping-a-c-library-in-lua/
 
-	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript("t2.lua", "t2.lua");
+	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
 	
 
 	//ls->RegisterFunction("Print_fce", NULL);
@@ -228,6 +238,72 @@ void doSomething2()
 }
 
 
+void benchmark()
+{
+	
+	srand(time(NULL));
+
+	Lua::LuaScript *ls = Create("benchmark.lua");
+
+	const int COUNT = 1000000;
+	const int ARR_SIZE = 100000;
+
+	chrono::high_resolution_clock::time_point t1;
+	chrono::high_resolution_clock::time_point t2;
+	double res[ARR_SIZE];
+
+
+	START;
+	ls->Run();
+	END;
+	PRINT_TIME;
+
+
+	START;
+	Account * a = new Account(150);
+	for (int i = 1; i < 10000000; i++)
+	{
+		a->deposit(i);
+	}
+	for (int i = 1; i < 10000000; i++)
+	{
+		a->val += i;
+	}
+	printf("%f\n", a->balance());
+	printf("%f\n", a->val);
+	END;
+	PRINT_TIME;
+}
+
+#ifdef LUA_INTF
+void LuaIntfBenchmark(MyStringAnsi name)
+{
+	const int COUNT = 1000000;
+	const int ARR_SIZE = 100000;
+
+	chrono::high_resolution_clock::time_point t1;
+	chrono::high_resolution_clock::time_point t2;
+	double res[ARR_SIZE];
+
+
+
+	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
+	lua_State * L = ls->GetState();
+
+	LuaIntf::LuaBinding(L).beginClass<Account>("Account")
+		.addConstructor(LUA_ARGS(double))		
+		.addFunction("balance", &Account::balance, LUA_ARGS())
+		.addFunction("deposit", &Account::deposit, LUA_ARGS(double))
+		.addVariable("vv", &Account::val, &Account::val)
+		.endClass();
+
+	START;
+	ls->Run();
+	END;
+	PRINT_TIME;
+}
+#endif
+
 int main(int argc, char * argv[])
 {
 	/*
@@ -240,28 +316,21 @@ int main(int argc, char * argv[])
 
 	return 0;
 	*/
-	srand(time(NULL));
-
-	const int COUNT = 1000000;
-	const int ARR_SIZE = 100000;
-	
-	chrono::high_resolution_clock::time_point t1;
-	chrono::high_resolution_clock::time_point t2;
-	double res[ARR_SIZE];
-
-
-#define START t1 = chrono::high_resolution_clock::now()
-#define END t2 = chrono::high_resolution_clock::now()
-#define PRINT_TIME cout << "Time: " << std::chrono::duration_cast<chrono::milliseconds>(t2 - t1).count() << " ms" << endl
-#define ANTI_OPTIMALIZATION double sum = 0; for (int i = 0; i < ARR_SIZE; i++) { sum += res[i]; } cout << "Array sum = " << sum << endl;
-#define RESET_ARRAY for (int i = 0; i < ARR_SIZE; i++) { res[i] = 0;}
-
-	
 	Lua::LuaWrapper::Initialize();
 
 
+	benchmark();
+	//LuaIntfBenchmark("benchmark.lua");
+	return 1;
+
+
+
 	
-	Lua::LuaScript *ls = Create();
+	
+
+
+	
+	Lua::LuaScript *ls = Create("t2.lua");
 	lua_State * L = ls->GetState();
 
 
@@ -277,7 +346,7 @@ int main(int argc, char * argv[])
 
 	
 	Account* ee = new Account(600);	
-	//ls->SetGlobalVarClass("ee", ee);
+	ls->SetGlobalVarClass("ee", ee);
 
 	Account* cc = new Account(900);
 	//ls->SetGlobalVarLight("cc", cc);

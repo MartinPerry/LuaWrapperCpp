@@ -62,20 +62,7 @@ void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -1, "__newindex");
 
-	/*
-	lua_pushliteral(L, "__index");
-	lua_pushstring(L, classTableName);
-	lua_pushcclosure(L, LuaCallbacks::index<T>, 1);
-	lua_rawset(L, metaTableID);
-
-
-	lua_pushliteral(L, "__newindex");
-	lua_pushstring(L, classTableName);
-	lua_pushcclosure(L, LuaCallbacks::new_index<T>, 1);
-	lua_rawset(L, metaTableID);
-	*/
-
-	
+		
 	//lua_pushstring(L, classBind.className.c_str());	
 	lua_pushcclosure(L, LuaCallbacks::create_new<T>, 0);
 	lua_setglobal(L, classBind.ctorName.c_str()); // this is how function will be named in Lua
@@ -110,8 +97,29 @@ void LuaScript::RegisterClass(const LuaClassBind<T> & classBind)
 #endif
 	lua_rawset(L, metaTableID);
 
-			
-	//return;
+	
+	if (classBind.attrs.size() > 1)
+	{
+		lua_pushliteral(L, "__index");
+		lua_pushstring(L, classTableName);
+		lua_pushcclosure(L, LuaCallbacks::index<T>, 1);
+		lua_rawset(L, metaTableID);
+
+
+		lua_pushliteral(L, "__newindex");
+		lua_pushstring(L, classTableName);
+		lua_pushcclosure(L, LuaCallbacks::new_index<T>, 1);
+		lua_rawset(L, metaTableID);
+
+		for (size_t i = 0; i < classBind.attrs.size() - 1; i++)
+		{
+			lua_pushstring(L, classBind.attrs[i].name);
+			lua_pushlightuserdata(L, classBind.attrs[i].func);
+			lua_rawset(L, -3);
+		}
+	}
+
+	return;
 	//---------------------------------------------------------------------
 
 	lua_pop(L, -1);

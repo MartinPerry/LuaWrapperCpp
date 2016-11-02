@@ -92,18 +92,19 @@ int LuaCallbacks::tmp3(lua_State * L)
 }
 
 
-int LuaCallbacks::tmp2(lua_State * L, const char * argsMetatableName)
+int LuaCallbacks::tmp2(lua_State * L, const char * metatableName)
 {
 	
+
 	Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 	
 	
-	lua_insert(L, 1);
 	
+	lua_insert(L, 1);
 
 	const char * keyName = luaL_checkstring(L, -1);
 
-	luaL_getmetatable(L, argsMetatableName);
+	luaL_getmetatable(L, metatableName);
 	lua_getfield(L, -1, keyName);
 	getSetFunction getSetArg = (getSetFunction)lua_touserdata(L, -1);
 
@@ -113,18 +114,19 @@ int LuaCallbacks::tmp2(lua_State * L, const char * argsMetatableName)
 		return 1;
 	}
 
-
-	lua_settop(L, 1);
 	
+	lua_settop(L, 2);  //remove everything	except last 2 values from stack
+	lua_insert(L, 1);  //"put" stack top value on stack bottom
+	//script->PrintStack("xxx");
 
-
+	/*
 	luaL_getmetatable(L, argsMetatableName);
 	lua_getfield(L, -1, "__parent");
 	//void *a = lua_touserdata(L, -1);
 
 	lua_insert(L, 1);	
 	lua_pop(L, 1);
-	
+	*/
 	//lua_pushlightuserdata(L, a);
 	//lua_pushvalue(L, 1);
 
@@ -135,31 +137,29 @@ int LuaCallbacks::tmp2(lua_State * L, const char * argsMetatableName)
 	return 0;
 }
 
-int LuaCallbacks::tmp(lua_State * L, const char * argsMetatableName)
+int LuaCallbacks::tmp(lua_State * L, const char * metatableName)
 {
 	
 
 	Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
-	script->PrintStack("xxxx");
 	
-	const char * keyName = luaL_checkstring(L, -1);
-		
-	luaL_getmetatable(L, argsMetatableName);	
-	lua_getfield(L, -1, keyName);	
+	
+	const char * keyName = luaL_checkstring(L, -1);	
+	luaL_getmetatable(L, metatableName);	
+	lua_getfield(L, -1, keyName);		
 	getSetFunction getSetArg = (getSetFunction)lua_touserdata(L, -1);
 	
 	if (getSetArg == NULL)
-	{
-		printf("????");
+	{		
 		return 1;
 	}
-
+	/*
 	luaL_getmetatable(L, argsMetatableName); //set "arguments" metatable on stack top
 	lua_getfield(L, -1, "__parent"); //get "__parent" value on top
 
 	lua_insert(L, 1); //"put" "__parent" value on stack bottom
 	lua_settop(L, 1); //remove everything	except last value from stack
-	
+	*/
 	getSetArg(L, AttrCallType::GET);
 	
 	
