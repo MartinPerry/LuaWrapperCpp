@@ -6,7 +6,7 @@
 
 //Enable more type checking when getting pointer from Lua
 //However, this is a bit slower then unsafe version without checks
-#define SAFE_PTR_CHECKS	0
+#define SAFE_PTR_CHECKS	1
 
 
 #define LUA_INLINE FORCE_INLINE
@@ -27,7 +27,10 @@
 
 
 //=============================================================================================
-// Other stcrutures
+// Other structures
+#include "../Strings/MyStringAnsi.h"
+
+typedef MyStringAnsi LuaString;
 
 typedef enum AttrCallType { GET, SET } AttrCallType;
 

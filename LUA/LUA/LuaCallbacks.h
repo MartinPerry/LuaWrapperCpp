@@ -29,7 +29,7 @@ struct my_decay
 	typedef typename std::_If<
 		std::is_arithmetic<_Ty1>::value, typename _Ty1,
 		typename std::_If<
-			std::is_same<MyStringAnsi, _Ty1>::value, typename _Ty1,
+			std::is_same<LuaString, _Ty1>::value, typename _Ty1,
 			typename _Ty
 		>::type
 	>::type type;

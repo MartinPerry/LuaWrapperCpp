@@ -20,6 +20,7 @@
 #include <tuple>
 #include <vector>
 
+//#define LUA_INTF
 #ifdef LUA_INTF
 #include <LuaIntf/LuaIntf.h>
 #endif
@@ -141,7 +142,7 @@ void luaW_printstack(lua_State* L)
 
 
 
-Lua::LuaScript * Create(MyStringAnsi name)
+Lua::LuaScript * Create(LuaString name)
 {
 	//http://loadcode.blogspot.cz/2007/02/wrapping-c-classes-in-lua.html
 	//https://john.nachtimwald.com/2014/07/12/wrapping-a-c-library-in-lua/
@@ -162,8 +163,8 @@ Lua::LuaScript * Create(MyStringAnsi name)
 	cb.AddMethod("Print7", CLASS_METHOD(Account, Print7));
 	cb.AddMethod("deposit", CLASS_METHOD(Account, deposit));
 	cb.AddMethod("balance", CLASS_METHOD(Account, balance));
-	cb.ctor = [](Lua::LuaScript * script)  {
-		return new Account(script->GetFnInput<double>());		
+	cb.ctor = [](Lua::LuaScript * script) {
+		return new Account(script->GetFnInput<double>());
 	};
 
 	cb.AddAttribute("vv", CLASS_ATTRIBUTE(Account, val));
@@ -185,7 +186,10 @@ Lua::LuaScript * Create(MyStringAnsi name)
 		return str;
 	};
 	*/
-	ls->RegisterClass<Account>(cb);
+
+	ls->RegisterClass(cb);
+
+
 
 
 	ls->RegisterFunction("Print_fce", METHOD(HelloMethod));

@@ -33,17 +33,18 @@ namespace Lua
 			
 			
 
-			LuaScript(lua_State * state, const MyStringAnsi & scriptName, const MyStringAnsi & scriptFileName);
+			LuaScript(lua_State * state, const LuaString & scriptName, const LuaString & scriptFileName);
 			~LuaScript();
 
 			lua_State * GetState();
 
 			void Reload();
 			
-			void RegisterFunction(const MyStringAnsi & luaFName, lua_CFunction fn);
+			void RegisterFunction(const LuaString & luaFName, lua_CFunction fn);
 			
-			template <typename T>
-			void RegisterClass(const LuaClassBind<T> & classBind);
+			
+			void RegisterClass(const LuaClass & classBind);
+			void RegisterClass(const LuaClass * classBind);
 
 
 			bool IsStackEmpty() const;
@@ -57,16 +58,9 @@ namespace Lua
 			void IncStack();
 
 			void PrintStack();
-			void PrintStack(const MyStringAnsi & id);
+			void PrintStack(const LuaString & id);
 
 			//=============================================================================
-
-			int GetFnInputTableInt(const MyStringAnsi & varName);
-			bool GetFnInputTableBool(const MyStringAnsi & varName);
-			MyStringAnsi GetFnInputTableString(const MyStringAnsi & varName);
-			float GetFnInputTableFloat(const MyStringAnsi & varName);
-			double GetFnInputTableDouble(const MyStringAnsi & varName);
-			uint32 GetFnInputTableUnsigned(const MyStringAnsi & varName);
 
 
 			//=============================================================================
@@ -112,37 +106,37 @@ namespace Lua
 			void AddFnReturnValue(float val);
 			void AddFnReturnValue(double val);
 			void AddFnReturnValue(const char * val);
-			void AddFnReturnValue(const MyStringAnsi & val);
+			void AddFnReturnValue(const LuaString & val);
 
 			//=============================================================================
 			//===================== Set LUA global variable ===============================
 			//=============================================================================
 
 			template <typename T>
-			void SetGlobalVarClass(const MyStringAnsi & varName, T * val);
+			void SetGlobalVarClass(const LuaString & varName, T * val);
 
 			template <typename T>
-			void SetGlobalVarLight(const MyStringAnsi & varName, T * val);
+			void SetGlobalVarLight(const LuaString & varName, T * val);
 
 			template <typename T, INTEGRAL_SIGNED(T)>
-			LUA_INLINE void SetGlobalVar(const MyStringAnsi & varName, T val)
+			LUA_INLINE void SetGlobalVar(const LuaString & varName, T val)
 			{
 				lua_pushinteger(this->state, val);
 				lua_setglobal(this->state, varName.GetConstString());
 			}
 
 			template <typename T, INTEGRAL_UNSIGNED(T)>
-			LUA_INLINE void SetGlobalVar(const MyStringAnsi & varName, T val)
+			LUA_INLINE void SetGlobalVar(const LuaString & varName, T val)
 			{
 				lua_pushunsigned(this->state, val);
 				lua_setglobal(this->state, varName.GetConstString());
 			}
 		
-			void SetGlobalVar(const MyStringAnsi & varName, bool val);
-			void SetGlobalVar(const MyStringAnsi & varName, float val);
-			void SetGlobalVar(const MyStringAnsi & varName, double val);
-			void SetGlobalVar(const MyStringAnsi & varName, const char * val);
-			void SetGlobalVar(const MyStringAnsi & varName, const MyStringAnsi & val);
+			void SetGlobalVar(const LuaString & varName, bool val);
+			void SetGlobalVar(const LuaString & varName, float val);
+			void SetGlobalVar(const LuaString & varName, double val);
+			void SetGlobalVar(const LuaString & varName, const char * val);
+			void SetGlobalVar(const LuaString & varName, const LuaString & val);
 
 
 
@@ -153,8 +147,8 @@ namespace Lua
 
 		private:
 			lua_State * state;
-			MyStringAnsi scriptName;
-			MyStringAnsi scriptFileName;
+			LuaString scriptName;
+			LuaString scriptFileName;
 			int runCount;
 			bool returnLightUserData;
 
@@ -170,7 +164,7 @@ namespace Lua
 
 			//=============================================================================
 
-			std::vector<MyStringAnsi> GetAllGlobals();
+			std::vector<LuaString> GetAllGlobals();
 
 			
 			//=============================================================================
@@ -204,7 +198,7 @@ namespace Lua
 			double GetFnInputImpl(tag<double>);
 			float GetFnInputImpl(tag<float>);
 			bool GetFnInputImpl(tag<bool>);
-			MyStringAnsi GetFnInputImpl(tag<MyStringAnsi>);
+			LuaString GetFnInputImpl(tag<LuaString>);
 
 		};
 

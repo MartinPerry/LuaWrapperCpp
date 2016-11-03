@@ -13,7 +13,7 @@ struct lua_State;
 
 #include "../Strings/MyStringAnsi.h"
 #include "../Macros.h"
-
+#include "./LuaClassBind.h"
 
 namespace Lua
 {
@@ -25,11 +25,14 @@ namespace Lua
 		static void Destroy();
 		static LuaWrapper * GetInstance();
 
+
+		void AddClass(const LuaClass & luaClass);
+
 		LuaScript * GetScript(lua_State * state);
 		bool ExistScript(lua_State * state) const;
 		
 		
-		LuaScript * AddScript(const MyStringAnsi & scriptName, const MyStringAnsi & scriptFileName);
+		LuaScript * AddScript(const LuaString & scriptName, const LuaString & scriptFileName);
 
 		void ReloadAll();
 
@@ -46,7 +49,9 @@ namespace Lua
 
 		
 		std::unordered_map<lua_State *, LuaScript *> luaScripts;
-		std::unordered_map<MyStringAnsi, void * > globalVariales;
+		//std::unordered_map<MyStringAnsi, void * > globalVariales;
+
+		std::unordered_map<LuaString, const LuaClass *> classes;
 
 
 	};

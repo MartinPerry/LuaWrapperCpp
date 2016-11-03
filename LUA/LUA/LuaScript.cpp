@@ -3,7 +3,7 @@
 
 
 #include "../Logger.h"
-
+#include "./LuaCallbacks.h"
 
 
 using namespace Lua;
@@ -17,7 +17,7 @@ using namespace Lua;
 //http://stackoverflow.com/questions/15396067/lua-newbie-c-lua-how-to-pass-a-struct-buffer-to-lua-from-c
 
 
-LuaScript::LuaScript(lua_State * state, const MyStringAnsi & scriptName, const MyStringAnsi & scriptFileName)
+LuaScript::LuaScript(lua_State * state, const LuaString & scriptName, const LuaString & scriptFileName)
 {
 	this->state = state;
 	this->scriptName = scriptName;
@@ -40,18 +40,18 @@ LuaScript::~LuaScript()
 
 void LuaScript::Reload()
 {
-	MyStringAnsi script = MyStringAnsi::LoadFromFile(this->scriptFileName);
+	MyStringAnsi script = MyStringAnsi::LoadFromFile(this->scriptFileName.c_str());
 
-	int status = luaL_loadbuffer(this->state, script.GetConstString(), script.GetLength(), this->scriptName.GetConstString());
+	int status = luaL_loadbuffer(this->state, script.c_str(), script.GetLength(), this->scriptName.c_str());
 	if (status)
 	{
-		MY_LOG_ERROR("Failed to load LUA script %s : %s", this->scriptName.GetConstString(),
+		MY_LOG_ERROR("Failed to load LUA script %s : %s", this->scriptName.c_str(),
 			lua_tostring(state, -1));
 
 		return;
 	}
 
-	lua_setglobal(this->state, this->scriptName.GetConstString());
+	lua_setglobal(this->state, this->scriptName.c_str());
 
 }
 
@@ -109,20 +109,134 @@ Parametrs:
 	
 Register new C function to LUA
 -------------------------------------------------------------*/
-void LuaScript::RegisterFunction(const MyStringAnsi & luaFName, lua_CFunction fn)
+void LuaScript::RegisterFunction(const LuaString & luaFName, lua_CFunction fn)
 {	
 	lua_register( this->state, luaFName.c_str(), fn );
 }
 
-std::vector<MyStringAnsi> LuaScript::GetAllGlobals()
+void LuaScript::RegisterClass(const LuaClass * classBind)
 {
-	std::vector<MyStringAnsi> v;
+	this->RegisterClass(*classBind);
+}
+
+/*-----------------------------------------------------------
+Function:	Register
+Parameters:
+
+Returns:
+
+
+Register new lua binding for class
+-------------------------------------------------------------*/
+void LuaScript::RegisterClass(const LuaClass & classBind)
+{
+	std::type_index key = classBind.typeIndex;
+
+	if (LuaCallbacks::ctors.find(key) != LuaCallbacks::ctors.end())
+	{
+		MY_LOG_ERROR("Class %s already registered - std::type_index already exist",
+			classBind.ctorName.c_str());
+		return;
+	}
+
+	const char * classTableName = classBind.ctorName.c_str();
+
+	
+	LuaCallbacks::ctors[key] = classBind.ctor;
+	LuaCallbacks::toString[key] = classBind.toString;
+	LuaCallbacks::tableName[key] = classTableName;
+
+	this->returnLightUserData = classBind.returnLightUserData;
+
+	//http://cfc.kizzx2.com/index.php/binding-c-classes-to-lua-a-step-by-step-example-for-beginners/
+	//http://lua-users.org/lists/lua-l/2006-08/msg00245.html
+
+
+	lua_State * L = this->state;
+
+
+	luaL_newmetatable(L, classTableName); //mt2
+	int metaTableID = lua_gettop(L);
+
+
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -1, "__index");
+
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -1, "__newindex");
+
+
+	//lua_pushstring(L, classBind.className.c_str());	
+	lua_pushcclosure(L, classBind.create_new, 0);
+	lua_setglobal(L, classBind.ctorName.c_str()); // this is how function will be named in Lua
+
+
+												  // Register the C functions _into_ the metatable we just created.	
+#if (SAFE_PTR_CHECKS == 1)
+	lua_pushstring(L, classTableName);
+	luaL_setfuncs(L, &classBind.methods[0], 1);
+#else
+	luaL_setfuncs(L, &classBind.methods[0], 0);
+#endif
+
+	//double underscore variables
+	//http://nova-fusion.com/2011/06/30/lua-metatables-tutorial/
+	//http://stackoverflow.com/questions/10891957/difference-between-tables-and-metatables-in-lua
+
+
+	//rewrite __gc with our own
+	lua_pushliteral(L, "__gc");
+	lua_pushcfunction(L, classBind.garbage_collect);
+	lua_rawset(L, metaTableID);
+
+
+
+	lua_pushliteral(L, "__tostring");
+#if (SAFE_PTR_CHECKS == 1)
+	lua_pushstring(L, classTableName);
+	lua_pushcclosure(L, classBind.to_string, 1);
+#else
+	lua_pushcclosure(L, classBind.to_string, 0);
+#endif
+	lua_rawset(L, metaTableID);
+
+
+	if (classBind.attrs.size() > 1)
+	{
+		lua_pushliteral(L, "__index");
+		lua_pushstring(L, classTableName);
+		lua_pushcclosure(L, classBind.index, 1);
+		lua_rawset(L, metaTableID);
+
+
+		lua_pushliteral(L, "__newindex");
+		lua_pushstring(L, classTableName);
+		lua_pushcclosure(L, classBind.new_index, 1);
+		lua_rawset(L, metaTableID);
+
+		for (size_t i = 0; i < classBind.attrs.size() - 1; i++)
+		{
+			lua_pushstring(L, classBind.attrs[i].name);
+			lua_pushlightuserdata(L, classBind.attrs[i].func);
+			lua_rawset(L, -3);
+		}
+	}
+
+					
+}
+
+
+
+
+std::vector<LuaString> LuaScript::GetAllGlobals()
+{
+	std::vector<LuaString> v;
 	//Get all global variables from Lua
 	lua_pushglobaltable(this->state);       // Get global table
 	lua_pushnil(this->state);               // put a nil key on stack
 	while (lua_next(this->state,-2) != 0)   // key(-1) is replaced by the next key(-1) in table(-2)
 	{ 
-		MyStringAnsi name = lua_tostring(this->state,-2);  // Get key(-2) name
+		LuaString name = lua_tostring(this->state,-2);  // Get key(-2) name
 		v.push_back(name);
 
 		lua_pop(this->state,1);               // remove value(-1), now key on top at(-1)
@@ -157,7 +271,7 @@ void LuaScript::Run()
 	if(lua_isfunction(this->state, -1) == false)
     {	
 		lua_pop(this->state, 1);
-		lua_getglobal(this->state, this->scriptName.GetConstString());		
+		lua_getglobal(this->state, this->scriptName.c_str());
 
 		status = lua_pcall( this->state, 0, LUA_MULTRET, 0 );
 			
@@ -169,7 +283,7 @@ void LuaScript::Run()
 
 	if (status != 0)
 	{
-		MY_LOG_ERROR("Failed to run LUA script %s : %s", this->scriptName.GetConstString(),
+		MY_LOG_ERROR("Failed to run LUA script %s : %s", this->scriptName.c_str(),
 			lua_tostring( this->state, -1 ));
         
 	}
@@ -201,7 +315,7 @@ void LuaScript::PrintStack()
 	this->PrintStack("");
 }
 
-void LuaScript::PrintStack(const MyStringAnsi & id) 
+void LuaScript::PrintStack(const LuaString & id)
 {
 	int i = lua_gettop(this->state);
 	printf("\n ----------------  Stack Dump [%s] ----------------\n", id.c_str());
@@ -224,144 +338,6 @@ void LuaScript::PrintStack(const MyStringAnsi & id)
 	printf("--------------- Stack Dump Finished [%s] ---------------\n\n", id.c_str());
 }
 
-/*-----------------------------------------------------------
-Function:	GetFnInputTableInt
-Parametrs:
-	[in] varName - "table variable" name
-Returns:
-	int value
-
-Get value from LUA "table". Suply struct
-struct X 
-{
- int a; - variable name
-}
--------------------------------------------------------------*/
-int LuaScript::GetFnInputTableInt(const MyStringAnsi & varName)
-{
-	lua_pushstring(this->state, varName.GetConstString()); // let Lua know what we're looking for
-	lua_gettable(this->state, this->stackPtr); // let Lua know where we're looking for it
-	int val = this->GetReturnValue<int>(); // get requested value (which was placed on top of the stack by lua_gettable)
-	lua_pop(this->state, 1); // clean up
-	return val;
-}
-
-
-/*-----------------------------------------------------------
-Function:	GetFnInputTableBool
-Parametrs:
-	[in] varName - "table variable" name
-Returns:
-	bool  value
-
-Get value from LUA "table". Suply struct
-struct X 
-{
- bool a; - variable name
-}
--------------------------------------------------------------*/
-bool LuaScript::GetFnInputTableBool(const MyStringAnsi & varName)
-{
-	lua_pushstring(this->state, varName.GetConstString()); // let Lua know what we're looking for
-	lua_gettable(this->state, this->stackPtr); // let Lua know where we're looking for it
-	bool val = this->GetReturnValue<bool>(); // get requested value (which was placed on top of the stack by lua_gettable)
-	lua_pop(this->state, 1); // clean up
-	return val;
-}
-
-
-/*-----------------------------------------------------------
-Function:	GetFnInputTableString
-Parametrs:
-	[in] varName - "table variable" name
-Returns:
-	MyStringAnsi  value
-
-Get value from LUA "table". Suply struct
-struct X 
-{
- MyStringAnsi a; - variable name
-}
--------------------------------------------------------------*/
-MyStringAnsi LuaScript::GetFnInputTableString(const MyStringAnsi & varName)
-{
-	lua_pushstring(this->state, varName.GetConstString()); // let Lua know what we're looking for
-	lua_gettable(this->state, this->stackPtr); // let Lua know where we're looking for it
-	MyStringAnsi val = this->GetReturnValue<MyStringAnsi>(); // get requested value (which was placed on top of the stack by lua_gettable)
-	lua_pop(this->state, 1); // clean up
-
-	return val;
-}
-
-/*-----------------------------------------------------------
-Function:	GetFnInputTableFloat
-Parametrs:
-	[in] varName - "table variable" name
-Returns:
-	float  value
-
-Get value from LUA "table". Suply struct
-struct X 
-{
- float a; - variable name
-}
--------------------------------------------------------------*/
-float LuaScript::GetFnInputTableFloat(const MyStringAnsi & varName)
-{
-	lua_pushstring(this->state, varName.GetConstString()); // let Lua know what we're looking for
-	lua_gettable(this->state, this->stackPtr); // let Lua know where we're looking for it
-	float val = this->GetReturnValue<float>(); // get requested value (which was placed on top of the stack by lua_gettable)
-	lua_pop(this->state, 1); // clean up
-
-	return val;
-}
-
-/*-----------------------------------------------------------
-Function:	GetFnInputTableDouble
-Parametrs:
-	[in] varName - "table variable" name
-Returns:
-	double  value
-
-Get value from LUA "table". Suply struct
-struct X 
-{
- double a; - variable name
-}
--------------------------------------------------------------*/
-double LuaScript::GetFnInputTableDouble(const MyStringAnsi & varName)
-{
-	lua_pushstring(this->state, varName.GetConstString()); // let Lua know what we're looking for
-	lua_gettable(this->state, this->stackPtr); // let Lua know where we're looking for it
-	double val = this->GetReturnValue<double>(); // get requested value (which was placed on top of the stack by lua_gettable)
-	lua_pop(this->state, 1); // clean up
-
-	return val;
-}
-
-/*-----------------------------------------------------------
-Function:	GetFnInputTableUnsigned
-Parametrs:
-	[in] varName - "table variable" name
-Returns:
-	uint32  value
-
-Get value from LUA "table". Suply struct
-struct X 
-{
- uint32 a; - variable name
-}
--------------------------------------------------------------*/
-uint32 LuaScript::GetFnInputTableUnsigned(const MyStringAnsi & varName)
-{
-	lua_pushstring(this->state, varName.GetConstString()); // let Lua know what we're looking for
-	lua_gettable(this->state, this->stackPtr); // let Lua know where we're looking for it
-	uint32 val = this->GetReturnValue<uint32>(); // get requested value (which was placed on top of the stack by lua_gettable)
-	lua_pop(this->state, 1); // clean up
-
-	return val;
-}
-
 
 
 
@@ -379,32 +355,32 @@ uint32 LuaScript::GetFnInputTableUnsigned(const MyStringAnsi & varName)
 
 
 
-LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, bool val)
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, bool val)
 {
 	lua_pushboolean(this->state, val);
-	lua_setglobal(this->state, varName.GetConstString());
+	lua_setglobal(this->state, varName.c_str());
 };
 
-LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, float val)
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, float val)
 {
 	lua_pushnumber(this->state, val);
-	lua_setglobal(this->state, varName.GetConstString());
+	lua_setglobal(this->state, varName.c_str());
 };
 
-LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, double val)
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, double val)
 {
 	lua_pushnumber(this->state, val);
-	lua_setglobal(this->state, varName.GetConstString());
+	lua_setglobal(this->state, varName.c_str());
 };
 
-LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, const char * val)
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, const char * val)
 {
 	lua_pushstring(this->state, val);
-	lua_setglobal(this->state, varName.GetConstString());
+	lua_setglobal(this->state, varName.c_str());
 };
 
-LUA_INLINE void LuaScript::SetGlobalVar(const MyStringAnsi & varName, const MyStringAnsi & val)
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, const LuaString & val)
 {
-	lua_pushstring(this->state, val.GetConstString());
-	lua_setglobal(this->state, varName.GetConstString());
+	lua_pushstring(this->state, val.c_str());
+	lua_setglobal(this->state, varName.c_str());
 };
