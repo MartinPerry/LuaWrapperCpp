@@ -164,6 +164,8 @@ Lua::LuaScript * Create(LuaString name)
 	cb.AddMethod("Print2", CLASS_METHOD(Account, Print2));
 	cb.AddMethod("Print3", CLASS_METHOD(Account, Print3));
 	cb.AddMethod("Print4", CLASS_METHOD(Account, Print4));
+	cb.AddMethod("PrintConst", CLASS_METHOD(Account, PrintConst));
+	//cb.AddMethod("PrintConst", LuaCallbacks::function2<decltype(&Account::PrintConst), &Account::PrintConst>);	
 	cb.AddMethod("Print5", CLASS_METHOD(Account, Print5));
 	cb.AddMethod("Print6", CLASS_METHOD(Account, Print6));
 	cb.AddMethod("Print7", CLASS_METHOD(Account, Print7));

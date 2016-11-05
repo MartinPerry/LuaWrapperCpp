@@ -23,14 +23,21 @@
 template<typename T, typename... Args>
 struct ClassOverloadMethod {
 	template<typename Ret>
-	static auto get(Ret(T::*)(Args...))->Ret(T::*)(Args...);
+	static auto get(Ret(T::*)(Args...)) -> Ret(T::*)(Args...) {};
+
+	template<typename Ret>
+	static auto get(Ret(T::*)(Args...)const)->Ret(T::*)(Args...)const {};
 };
 
 template<typename T>
 struct ClassOverloadMethod<T> {
 	template<typename Ret>
-	static auto get(Ret(T::*)())->Ret(T::*)();
+	static auto get(Ret(T::*)()) -> Ret(T::*)() {};
+
+	template<typename Ret>
+	static auto get(Ret(T::*)()const)->Ret(T::*)()const {};
 };
+
 
 
 template<class _Ty>
@@ -116,6 +123,11 @@ struct count_class_method_args<Res(ClassType::*)(Args...)>
 	static constexpr std::size_t value = sizeof...(Args);
 };
 
+template <class ClassType, class Res, class... Args>
+struct count_class_method_args<Res(ClassType::*)(Args...) const> 
+	: count_class_method_args<Res(ClassType::*)(Args...)>
+{
+};
 
 //=======================================================================================
 
@@ -130,7 +142,16 @@ struct class_method_info<Res(T::*)(Args...)>
 	typedef Res RetVal;
 	static constexpr std::size_t ArgsCount = sizeof...(Args);
 	static constexpr bool IsClassMethod = true;	
+	static constexpr bool IsConstThis = false;
 	//typedef count_method_args<T>::value ArgsCount;
+};
+
+
+template <class T, class Res, class... Args>
+struct class_method_info<Res(T::*)(Args...) const> 
+	: class_method_info<Res(T::*)(Args...)>
+{
+	static constexpr bool IsConstThis = true;
 };
 
 //=======================================================================================
@@ -150,34 +171,38 @@ template <class ClassType,
 >
 struct func_impl_class_method<Res(ClassType::*)(Args...), MethodName, std::index_sequence<Is...>>
 {
-	/*
-	void operator()(ClassType * obj, std::tuple<Args...> &&tup)
-	{
-	(obj->*MethodName)(std::forward<Args>((std::get<Is>(tup)))...);
-	}
-	*/
-
+	
 	static void call(ClassType * obj, Lua::LuaScript * s)
 	{
-		//auto tmp = getTuple<typename std::decay<Args>::type...>::get(s);
-		//auto tmp = getTuple<Args&&...>::get(s);
-
 		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
-		//auto tmp = getTuple2<typename std::decay<Args&&>::type...>::get(s);
-		//auto tmp = getTuple2<typename std::decay<Args>::type&&...>::get(s);
-		//auto tmp = getTuple2<Args...>::get(s);
-		
-		//tuple_extractor<sizeof...(Args)>::extractTuple<ClassType, Res(ClassType::*)(Args...), Args...>(obj, MethodName, tmp);
-		
 		(obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);		
 	}
 
 	static Res callWithReturn(ClassType * obj, Lua::LuaScript * s)
 	{
 		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		return (obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);
+	}
+};
 
-		//tuple_extractor<sizeof...(Args)>::extractTuple<ClassType, Res(ClassType::*)(Args...), Args...>(obj, MethodName, tmp);
 
+template <class ClassType,
+	class Res,
+	class... Args,
+	Res(ClassType::*MethodName)(Args...) const,
+	std::size_t... Is
+>
+struct func_impl_class_method<Res(ClassType::*)(Args...) const, MethodName, std::index_sequence<Is...>>	
+{
+	static void call(ClassType * obj, Lua::LuaScript * s)
+	{
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		(obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);
+	}
+
+	static Res callWithReturn(ClassType * obj, Lua::LuaScript * s)
+	{
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
 		return (obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);
 	}
 };
@@ -199,6 +224,8 @@ struct count_method_args<Res(*)(Args...)>
 	static constexpr std::size_t value = sizeof...(Args);
 };
 
+
+
 //=======================================================================================
 
 template <class MT>
@@ -211,8 +238,12 @@ struct method_info<Res(*)(Args...)>
 	typedef Res RetVal;
 	static constexpr std::size_t ArgsCount = sizeof...(Args);
 	static constexpr bool IsClassMethod = false;	
+	static constexpr bool IsConstThis = false;
 	//typedef count_method_args<T>::value ArgsCount;
 };
+
+
+
 
 //=======================================================================================
 
@@ -239,7 +270,6 @@ struct func_impl_method<Res(*)(Args...), MethodName, std::index_sequence<Is...>>
 		return (MethodName)(std::forward<Args>((std::get<Is>(tmp)))...);
 	}
 };
-
 
 
 
@@ -327,6 +357,7 @@ struct LuaCallbacks
 
 		return script->GetFnReturnValueCount();
 	}
+
 
 	template <LUA_CLASS_SIGNATURE(MethodType, HAVE_RETURN, NO_ARGS)>
 	static int function(lua_State *L)

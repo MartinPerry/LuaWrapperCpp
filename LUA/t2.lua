@@ -99,6 +99,8 @@ end
 
 a = Account_2(150, 0)
 
+a:PrintConst()
+
 --os.exit()
 --a:Print7(ee)
 

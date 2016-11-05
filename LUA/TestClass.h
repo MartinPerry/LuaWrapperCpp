@@ -36,13 +36,20 @@ public:
 		return m_balance;
 	}
 	double balance2(int s) { printf("MUL: %i\n", s); return s * m_balance; }
+
+
+	void PrintConst(int i) const
+	{
+		printf("CONST %i\n", i);
+	}
+
 	void Print0()
 	{
 		printf("STR0: EMPTY\n");
 		val = 77;
 	}
 
-	void Print0(double vl, double o)
+	void Print0(double vl, double o) const
 	{
 		printf("STR0: overload %f %f\n", vl, o);		
 	}

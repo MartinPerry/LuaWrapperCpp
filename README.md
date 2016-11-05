@@ -29,6 +29,7 @@ We have simple C++ test class:
 		
 		void Print4(TestClass & t) { printf("PRINTF_4 % f\n", t.m_val);}
 		
+		void Print5() const { printf("PRINTF_5\n"); }
     };	
 ````
 
@@ -44,6 +45,7 @@ And bind it to `LuaClassBind`
 	cb.AddMethod("Print2", CLASS_METHOD(TestClass, Print2));
 	cb.AddMethod("Print3", CLASS_METHOD(TestClass, Print3));
 	cb.AddMethod("Print4", CLASS_METHOD(TestClass, Print4));
+	cb.AddMethod("Print5", CLASS_METHOD(TestClass, Print5));
 	
 	cb.AddAttribute("m_val", CLASS_ATTRIBUTE(TestClass, m_val));
 		
@@ -98,4 +100,6 @@ Stackoverflow questions related to this project:
 
 * http://stackoverflow.com/questions/40072627/c-template-parameter-as-function-call-name
 
-* http://stackoverflow.com/questions/40418367/c11-stddeclvalt-name-of-method/40434788#40434788
+* http://stackoverflow.com/questions/40418367/c11-stddeclvalt-name-of-method
+
+* http://stackoverflow.com/questions/40436966/c-const-vs-non-const-member-function-template-with-function-pointers
