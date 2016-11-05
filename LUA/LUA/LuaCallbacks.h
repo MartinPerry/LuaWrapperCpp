@@ -49,6 +49,18 @@ struct my_decay
 };
 
 
+
+template<int ...>
+struct seq { };
+
+template<int N, int ...S>
+struct gens : gens<N - 1, N - 1, S...> { };
+
+template<int ...S>
+struct gens<0, S...> {
+	typedef seq<S...> type;
+};
+
 //=============================================================================================
 // Tuple manipulation
 //=============================================================================================
@@ -171,6 +183,8 @@ struct func_impl_class_method<Res(ClassType::*)(Args...), MethodName, std::index
 };
 
 
+
+
 //=================================================================================================
 // Helper templates for method
 //=================================================================================================
@@ -255,7 +269,7 @@ struct LuaCallbacks
 #define HAVE_ARGS >
 #define NO_ARGS ==
 
-#define CLASS_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) typename MethodType, \
+#define LUA_CLASS_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) typename MethodType, \
 		MethodType MethodName, \
 		typename MethodInfo = class_method_info<MethodType>, \
 		typename RetVal = MethodInfo::RetVal, \
@@ -263,7 +277,7 @@ struct LuaCallbacks
 		typename std::enable_if <(MethodInfo::ArgsCount ARGS 0), void>::type* = nullptr, \
 		typename std::enable_if <(MethodInfo::IsClassMethod == true)>::type* = nullptr
 
-#define METHOD_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) typename MethodType, \
+#define LUA_METHOD_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) typename MethodType, \
 		MethodType MethodName, \
 		typename MethodInfo = method_info<MethodType>, \
 		typename RetVal = MethodInfo::RetVal, \
@@ -271,7 +285,7 @@ struct LuaCallbacks
 		typename std::enable_if <(MethodInfo::ArgsCount ARGS 0), void>::type* = nullptr, \
 		typename std::enable_if <(MethodInfo::IsClassMethod == false)>::type* = nullptr
 
-#define CLASS_FUNCTION_BODY \
+#define LUA_CLASS_FUNCTION_BODY \
 		MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1); \
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L); \
 		script->Reset(); \
@@ -282,10 +296,10 @@ struct LuaCallbacks
 	//=============================================================================================
 
 
-	template <CLASS_SIGNATURE(MethodType, NO_RETURN, HAVE_ARGS)>
+	template <LUA_CLASS_SIGNATURE(MethodType, NO_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{		
-		CLASS_FUNCTION_BODY;
+		LUA_CLASS_FUNCTION_BODY;
 
 		func_impl_class_method<MethodType, MethodName>::call(a, script);
 
@@ -293,10 +307,10 @@ struct LuaCallbacks
 	}
 
 
-	template <CLASS_SIGNATURE(MethodType, HAVE_RETURN, HAVE_ARGS)>	
+	template <LUA_CLASS_SIGNATURE(MethodType, HAVE_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{
-		CLASS_FUNCTION_BODY;
+		LUA_CLASS_FUNCTION_BODY;
 
 		script->AddFnReturnValue(func_impl_class_method<MethodType, MethodName>::callWithReturn(a, script));
 
@@ -304,33 +318,34 @@ struct LuaCallbacks
 	}
 
 
-	template <CLASS_SIGNATURE(MethodType, NO_RETURN, NO_ARGS)>
+	template <LUA_CLASS_SIGNATURE(MethodType, NO_RETURN, NO_ARGS)>
 	static int function(lua_State *L)
 	{
-		CLASS_FUNCTION_BODY;
+		LUA_CLASS_FUNCTION_BODY;
 		
 		(a->*MethodName)();
 
 		return script->GetFnReturnValueCount();
 	}
 
-	template <CLASS_SIGNATURE(MethodType, HAVE_RETURN, NO_ARGS)>
+	template <LUA_CLASS_SIGNATURE(MethodType, HAVE_RETURN, NO_ARGS)>
 	static int function(lua_State *L)
 	{
-		CLASS_FUNCTION_BODY;
+		LUA_CLASS_FUNCTION_BODY;
 
 		script->AddFnReturnValue((a->*MethodName)());
 
 		return script->GetFnReturnValueCount();
 	}
 
+	
 	//=============================================================================================
 	// Method callbacks
 	//=============================================================================================
 
 	
 
-	template <METHOD_SIGNATURE(MethodType, NO_RETURN, HAVE_ARGS)>
+	template <LUA_METHOD_SIGNATURE(MethodType, NO_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
@@ -341,7 +356,7 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
-	template <METHOD_SIGNATURE(MethodType, HAVE_RETURN, HAVE_ARGS)>
+	template <LUA_METHOD_SIGNATURE(MethodType, HAVE_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{
 
@@ -353,7 +368,7 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
-	template <METHOD_SIGNATURE(MethodType, NO_RETURN, NO_ARGS)>	
+	template <LUA_METHOD_SIGNATURE(MethodType, NO_RETURN, NO_ARGS)>
 	static int function(lua_State *L)
 	{
 
@@ -365,7 +380,7 @@ struct LuaCallbacks
 		return script->GetFnReturnValueCount();
 	}
 
-	template <METHOD_SIGNATURE(MethodType, HAVE_RETURN, NO_ARGS)>
+	template <LUA_METHOD_SIGNATURE(MethodType, HAVE_RETURN, NO_ARGS)>
 	static int function(lua_State *L)
 	{
 
@@ -410,8 +425,7 @@ struct LuaCallbacks
 
 //protected:
 
-	static std::unordered_map<std::type_index, MyStringAnsi> tableName;
-	static std::unordered_map<std::type_index, std::function<void*(Lua::LuaScript *)> > ctors;
+	static std::unordered_map<std::type_index, MyStringAnsi> tableName;	
 	static std::unordered_map<std::type_index, std::function<std::string(void *)>> toString;
 
 	template <typename T>
@@ -455,23 +469,29 @@ struct LuaCallbacks
 	static int tmp(lua_State * L, const char * argsMetatableName);
 	static int tmp3(lua_State * L);
 
-	template <typename T>
-	static int create_new(lua_State *L)
-	{
-		//return tmp3(L);
 
-		std::function<void*(Lua::LuaScript *)> f = LuaCallbacks::ctors[std::type_index(typeid(T))];
 
-		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
-		script->Reset();
+	template<typename T, typename... Args, int ...S>
+	static T * ctor(lua_State * L, seq<S...>) {
 
-		T * newData = static_cast<T *>(f(script));;
-						
-		LuaCallbacks::SetNewUserDataClass(L, newData);
-		
-		return 1;
-
+		Lua::LuaScript * s = Lua::LuaWrapper::GetInstance()->GetScript(L);
+		s->Reset();
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		return new T(std::forward<Args>((std::get<S>(tmp)))...);
 	}
+
+
+	template <typename T, typename... Args>
+	static int create_new(lua_State * L)
+	{
+		T * newData = LuaCallbacks::ctor<T, Args...>(L, typename gens<sizeof...(Args)>::type());
+		
+		LuaCallbacks::SetNewUserDataClass(L, newData);
+
+		return 1;
+	}
+
+	
 
 	template <typename T>
 	LUA_INLINE static void SetNewUserDataClass(lua_State *L, T * val)

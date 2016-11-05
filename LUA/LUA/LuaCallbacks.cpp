@@ -1,7 +1,6 @@
 #include "./LuaCallbacks.h"
 
 std::unordered_map<std::type_index, MyStringAnsi > LuaCallbacks::tableName;
-std::unordered_map<std::type_index, std::function<void*(Lua::LuaScript *)> > LuaCallbacks::ctors;
 std::unordered_map<std::type_index, std::function<std::string(void *)> > LuaCallbacks::toString;
 
 

@@ -97,7 +97,7 @@ end
 --print_r(getmetatable(fallback_example))
 
 
-a = Account(150)
+a = Account_2(150, 0)
 
 --os.exit()
 --a:Print7(ee)

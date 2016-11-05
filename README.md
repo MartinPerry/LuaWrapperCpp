@@ -15,6 +15,7 @@ We have simple C++ test class:
         double m_val = 148;
 		
 		TestClass(double val) { m_val = val; }
+		TestClass(double v1, double v2) { m_val = v1 * v2; }
 				
 		void Print0() { printf("PRINTF_0\n"); }
 
@@ -34,7 +35,8 @@ We have simple C++ test class:
 And bind it to `LuaClassBind`
 ````c++
 	Lua::LuaClassBind<TestClass> cb("TestClass");	
-	
+	cb.SetDefaultCtor<double>();
+	cb.AddCtor<double, double>("TestClass_ctor2");
 	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(TestClass, Print0));
 	cb.AddMethod("Print0_args", CLASS_METHOD_OVERLOAD(TestClass, Print0, double, double));
 			
@@ -44,17 +46,17 @@ And bind it to `LuaClassBind`
 	cb.AddMethod("Print4", CLASS_METHOD(TestClass, Print4));
 	
 	cb.AddAttribute("m_val", CLASS_ATTRIBUTE(TestClass, m_val));
-	
-	cb.ctor = [](Lua::LuaScript * script) {
-		return new TestClass(script->GetFnInput<double>());
-	};
-
+		
 	cb.toString = MyFunction<std::string, TestClass *>([](TestClass * a) -> std::string {
 		return "string...";
 	});
 	
 ````
-`ctor` contains lambda function with constructor calling. 
+Each class must have one binded ctor via `SetDefaultCtor<...>`. This ctor is named same as "class". 
+However, you can specifiy additional ctors via `AddCtor<...>` and for each of them, name must be set.  
+All ctors in your solution behave like Factory pattern. In Lua, you call method and this method return new class instance.
+
+
 `toString` is optional and contains lambda for printing method from Lua, when `__tostring` metamethod is called.
 `CLASS_METHOD`, `CLASS_ATTRIBUTE` and `CLASS_METHOD_OVERLOAD` are macros to simplify binding. They are defined in `LuaMacros.h`.
 
@@ -69,6 +71,9 @@ And you can call it from Lua as
 	
 	t.m_val = 10
 	print(t.m_val)
+	
+	t2 = TestClass_ctor2(150, 150)
+	
 ````
 
 

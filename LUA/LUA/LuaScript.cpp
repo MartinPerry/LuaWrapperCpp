@@ -132,7 +132,7 @@ void LuaScript::RegisterClass(const LuaClass & classBind)
 {
 	std::type_index key = classBind.typeIndex;
 
-	if (LuaCallbacks::ctors.find(key) != LuaCallbacks::ctors.end())
+	if (LuaCallbacks::tableName.find(key) != LuaCallbacks::tableName.end())
 	{
 		MY_LOG_ERROR("Class %s already registered - std::type_index already exist",
 			classBind.ctorName.c_str());
@@ -142,7 +142,7 @@ void LuaScript::RegisterClass(const LuaClass & classBind)
 	const char * classTableName = classBind.ctorName.c_str();
 
 	
-	LuaCallbacks::ctors[key] = classBind.ctor;
+	//LuaCallbacks::ctors[key] = classBind.ctor;
 	LuaCallbacks::toString[key] = classBind.toString;
 	LuaCallbacks::tableName[key] = classTableName;
 
@@ -166,10 +166,16 @@ void LuaScript::RegisterClass(const LuaClass & classBind)
 	lua_setfield(L, -1, "__newindex");
 
 
-	//lua_pushstring(L, classBind.className.c_str());	
+	//Default ctor - named same as "class"
 	lua_pushcclosure(L, classBind.create_new, 0);
 	lua_setglobal(L, classBind.ctorName.c_str()); // this is how function will be named in Lua
 
+	//other ctors named as specified by user
+	for (size_t i = 0; i < classBind.ctors.size() - 1; i++)
+	{
+		lua_pushcclosure(L, classBind.ctors[i].func, 0);
+		lua_setglobal(L, classBind.ctors[i].name); // this is how function will be named in Lua
+	}
 
 												  // Register the C functions _into_ the metatable we just created.	
 #if (SAFE_PTR_CHECKS == 1)

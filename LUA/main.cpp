@@ -4,7 +4,6 @@
 
 #include "./LUA/LuaWrapperCpp.h"
 
-#include "FunctionCallback.h"
 
 #include "./Strings/MyString.h"
 
@@ -54,23 +53,6 @@
 
 
 
-//=============================================================================================
-//=============================================================================================
-//=============================================================================================
-
-
-
-/*
-#define method(class, name) {#name, class::name}
-
-const luaL_Reg LuaAccount::methods[] = {
-	method(LuaAccount, deposit),
-	method(LuaAccount, withdraw),
-	method(LuaAccount, balance),
-	{ 0,0 }
-};
-*/
-
 
 
 //=================================================================================================
@@ -109,24 +91,6 @@ int HelloMethodParamReturn(int v)
 //=================================================================================================
 
 using namespace std;
-
-
-void luaW_printstack(lua_State* L)
-{
-	int stack = lua_gettop(L);
-	for (int i = 1; i <= stack; i++)
-	{
-		std::cout << std::dec << i << ": " << lua_typename(L, lua_type(L, i));
-		switch (lua_type(L, i))
-		{
-			case LUA_TBOOLEAN: std::cout << " " << lua_toboolean(L, i); break;
-			case LUA_TSTRING: std::cout << " " << lua_tostring(L, i); break;
-			case LUA_TNUMBER: std::cout << " " << std::dec << (uintptr_t)lua_tointeger(L, i) << " (0x" << std::hex << lua_tointeger(L, i) << ")"; break;
-			default: std::cout << " " << std::hex << lua_topointer(L, i); break;
-		}
-		std::cout << std::endl;
-	}
-}
 
 
 
@@ -188,6 +152,8 @@ Lua::LuaScript * Create(LuaString name)
 	//ls->RegisterFunction("Print_fce", NULL);
 	
 	Lua::LuaClassBind<Account> cb("Account");
+	cb.SetDefaultCtor<double>();
+	cb.AddCtor<double, double>("Account_2");
 	//cb.AddMethod("Print0", LuaCallbacks::function<decltype(std::declval<Account>().Print0()) (Account::*)(), &Account::Print0>);
 	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(Account, Print0));
 	cb.AddMethod("Print0L", CLASS_METHOD_OVERLOAD(Account, Print0, double, double));
@@ -203,9 +169,11 @@ Lua::LuaScript * Create(LuaString name)
 	cb.AddMethod("Print7", CLASS_METHOD(Account, Print7));
 	cb.AddMethod("deposit", CLASS_METHOD(Account, deposit));
 	cb.AddMethod("balance", CLASS_METHOD(Account, balance));
+	/*
 	cb.ctor = [](Lua::LuaScript * script) {
 		return new Account(script->GetFnInput<double>());
 	};
+	*/
 
 	cb.AddAttribute("vv", CLASS_ATTRIBUTE(Account, val));
 	cb.AddAttribute("xx", CLASS_ATTRIBUTE(Account, xx));
@@ -238,10 +206,9 @@ Lua::LuaScript * Create(LuaString name)
 
 	
 	Lua::LuaClassBind<Account2> cb2("Account2");	
+	cb.SetDefaultCtor<double>();
 	cb2.AddMethod("Print0", CLASS_METHOD(Account2, Print0));
-	cb2.ctor = [](Lua::LuaScript * script) {
-		return new Account2(script->GetFnInput<double>());
-	};
+	
 
 	//ls->RegisterClass<Account2>(cb2);
 	

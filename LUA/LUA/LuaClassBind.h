@@ -29,9 +29,10 @@ namespace Lua
 
 		bool returnLightUserData;
 
-		std::function<void*(LuaScript *)> ctor;
+		
 		std::function<std::string(void *)> toString;
 
+		std::vector<luaL_Reg> ctors;
 		std::vector<luaL_Reg> methods;
 		std::vector<luaL_RegAttr> attrs;
 
@@ -51,7 +52,7 @@ namespace Lua
 			ctorName(c.ctorName)
 		{
 			this->returnLightUserData = c.returnLightUserData;
-			this->ctor = c.ctor;
+			this->ctors = c.ctors;
 			this->toString = c.toString;
 			this->methods = c.methods;
 			this->attrs = c.attrs;
@@ -81,9 +82,10 @@ namespace Lua
 		{
 			methods.push_back({ 0,0 });
 			attrs.push_back({ 0, 0 });
+			ctors.push_back({ 0,0 });
 			returnLightUserData = false;
 
-			this->create_new = LuaCallbacks::create_new<T>;
+			//this->create_new = LuaCallbacks::create_new_default<T>;
 			this->garbage_collect = LuaCallbacks::garbage_collect<T>;
 			this->to_string = LuaCallbacks::to_string<T>;
 			this->index = LuaCallbacks::index<T>;
@@ -100,6 +102,13 @@ namespace Lua
 			}
 			methods.clear();
 
+			for (size_t i = 0; i < ctors.size(); i++)
+			{
+				delete[] ctors[i].name;
+				ctors[i].name = NULL;
+			}
+			ctors.clear();
+
 			for (size_t i = 0; i < attrs.size(); i++)
 			{
 				delete[] attrs[i].name;
@@ -108,6 +117,30 @@ namespace Lua
 			attrs.clear();
 		}
 		
+		template <typename... Args>
+		void SetDefaultCtor()
+		{
+			this->create_new = LuaCallbacks::create_new<T, Args...>;
+		}
+		
+		template <typename... Args>
+		void AddCtor(const MyStringAnsi & name)
+		{		
+			if (name == this->ctorName)
+			{
+				//user specified ctor is named same as default ctor
+				return;
+			}
+			name.FillString(ctors[ctors.size() - 1].name);
+			ctors[ctors.size() - 1].func = LuaCallbacks::create_new<T, Args...>;
+			ctors.push_back({ 0,0 });
+		}
+
+		void SetDefaultCtor()
+		{
+			this->create_new = LuaCallbacks::create_new_default<T>;
+		}
+
 		void AddMethod(const LuaString & name, lua_CFunction f)
 		{
 			name.FillString(methods[methods.size() - 1].name);			

@@ -5,7 +5,7 @@
 
 class Account2 {
 public:
-
+	Account2() {}
 	Account2(double balance) { m2 = 30; m_balance = balance; }
 	void deposit2(double amount) { m_balance += amount + m2; }
 	void withdraw2(double amount) { m_balance -= amount; }
@@ -23,8 +23,9 @@ public:
 	MyStringAnsi xx = "ahoj aatr";
 	Account2 * cc = new Account2(1);
 	//Account * cc = new Account(1);
-
-	Account(double balance) { m_balance = balance;; }
+	Account() { printf("CTOR"); }
+	Account(double i, double v) { printf("CTOR_2"); }
+	Account(double balance) { printf("CTOR1");  m_balance = balance;; }
 	//Account(const Account & c) { m_balance = c.m_balance; printf("CC\n"); };
 	//Account(Account && c) {printf("MC\n"); };
 
