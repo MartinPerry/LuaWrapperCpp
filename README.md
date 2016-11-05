@@ -8,7 +8,8 @@ Class can be binded for use within Lua (for now, only instance methods and publi
 Each class is wrapped with `LuaClassBind`.
 
 We have simple C++ test class:
-````class TestClass
+````c++
+	class TestClass
     {
     public:
         double m_val = 148;
@@ -31,7 +32,7 @@ We have simple C++ test class:
 ````
 
 And bind it to `LuaClassBind`
-````
+````c++
 	Lua::LuaClassBind<TestClass> cb("TestClass");	
 	
 	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(TestClass, Print0));
@@ -58,7 +59,7 @@ And bind it to `LuaClassBind`
 `CLASS_METHOD`, `CLASS_ATTRIBUTE` and `CLASS_METHOD_OVERLOAD` are macros to simplify binding. They are defined in `LuaMacros.h`.
 
 And you can call it from Lua as
-````
+````lua
 	t = TestClass(150)
 	t:Print0()
 	t:Print0_args(1, 2)
