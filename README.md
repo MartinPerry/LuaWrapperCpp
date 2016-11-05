@@ -1,6 +1,28 @@
 # LuaWrapperCpp
 Lua Wrapper for C/C++ written from scratch
 
+This wrapper is still work-in-progress.
+
+
+Wrapper logic
+------------------------------------------
+Wrapper is writtent from scratch using C++11 without the in-depth knowledge of existing wrappers. 
+If there is a similarity with an existing solution, its purely coincidental.
+
+The main part of the wrapper consist of two classes - `LuaWrapper` and `LuaScript`.
+
+`LuaWrapper` is a singleton class. It initialize Lua virtual machine, create new scripts (`LuaScript`) and store them in a map. 
+In Lua callbacks, this is used to get `LuaScript` instances from `lua_State *`.
+
+`LuaScript` represents a single script that can be started.
+
+
+How to use it
+------------------------------------------
+You just have to include `LuaWrapperCpp.h`. 
+There are no external dependencies, except Lua library (version 5.2 is included in the project)
+
+
 Binding C++ class to wrapper
 ------------------------------------------
 
@@ -49,20 +71,21 @@ And bind it to `LuaClassBind`
 	
 	cb.AddAttribute("m_val", CLASS_ATTRIBUTE(TestClass, m_val));
 		
-	cb.toString = MyFunction<std::string, TestClass *>([](TestClass * a) -> std::string {
+	cb.toString = [](void * a) -> std::string {
+		TestClass * t = (TestClass *)a; //must be cast from void * to original type
 		return "string...";
 	});
 	
 ````
-Each class must have one binded ctor via `SetDefaultCtor<...>`. This ctor is named same as "class". 
-However, you can specifiy additional ctors via `AddCtor<...>` and for each of them, name must be set.  
-All ctors in your solution behave like Factory pattern. In Lua, you call method and this method return new class instance.
+Each class must have one binded ctor via `SetDefaultCtor<...>`. This ctor name is same as the name of the "class". 
+However, you can specifiy additional ctors via `AddCtor<...>` and for each of them, unique name must be set.  
+All ctors behave like Factory pattern. In Lua, you call an ordinary method that returns a new class instance.
 
 
-`toString` is optional and contains lambda for printing method from Lua, when `__tostring` metamethod is called.
+`toString` is optional and contains lambda function that is called, when `__tostring` metamethod is called in Lua.
 `CLASS_METHOD`, `CLASS_ATTRIBUTE` and `CLASS_METHOD_OVERLOAD` are macros to simplify binding. They are defined in `LuaMacros.h`.
 
-And you can call it from Lua as
+The above binded class can be called from Lua as
 ````lua
 	t = TestClass(150)
 	t:Print0()
@@ -70,6 +93,7 @@ And you can call it from Lua as
 	local r = t:Print2()
 	t:Print3(t)
 	t:Print4(t)
+	t:Print5()
 	
 	t.m_val = 10
 	print(t.m_val)
@@ -77,6 +101,12 @@ And you can call it from Lua as
 	t2 = TestClass_ctor2(150, 150)
 	
 ````
+
+Benchmark & comparison
+------------------------------------------
+We have compared our solution with [lua-itnf](https://github.com/SteveKChiu/lua-intf)
+
+TO DO - add timings and other comparisons
 
 
 References

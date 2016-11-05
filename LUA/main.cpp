@@ -186,7 +186,7 @@ Lua::LuaScript * Create(LuaString name)
 		return "string...";
 	});
 	*/
-	/*
+	
 	cb.toString = [](void * a) -> std::string {
 		Account * aa = (Account *)a;
 
@@ -195,7 +195,7 @@ Lua::LuaScript * Create(LuaString name)
 
 		return str;
 	};
-	*/
+	
 
 	ls->RegisterClass(cb);
 
