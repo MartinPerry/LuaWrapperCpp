@@ -15,6 +15,10 @@
 //=============================================================================================
 // Some helper DEFINEs
 
+
+#define CLASS_METHOD_OVERLOAD(ClassName, MethodName, ...) \
+	LuaCallbacks::function<decltype(ClassOverloadMethod<ClassName, ##__VA_ARGS__>::get(&ClassName::MethodName)), &ClassName::MethodName>
+
 #define CLASS_METHOD(ClassName, MethodName) \
 	LuaCallbacks::function<decltype(&ClassName::MethodName), &ClassName::MethodName>
 

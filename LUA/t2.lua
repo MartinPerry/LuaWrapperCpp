@@ -105,7 +105,8 @@ a = Account(150)
 --a:Print7(cc)
 --a:Print7(ee)
 --ee:Print0()
-
+a:Print0();
+a:Print0L(0, 0);
 print("xxxx")
 print(a)
 print(getmetatable(a))

@@ -99,6 +99,13 @@ namespace Lua
 				methods[i].name = NULL;
 			}
 			methods.clear();
+
+			for (size_t i = 0; i < attrs.size(); i++)
+			{
+				delete[] attrs[i].name;
+				attrs[i].name = NULL;
+			}
+			attrs.clear();
 		}
 		
 		void AddMethod(const LuaString & name, lua_CFunction f)

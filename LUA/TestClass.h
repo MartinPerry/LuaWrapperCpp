@@ -40,6 +40,12 @@ public:
 		printf("STR0: EMPTY\n");
 		val = 77;
 	}
+
+	void Print0(double vl, double o)
+	{
+		printf("STR0: overload %f %f\n", vl, o);		
+	}
+
 	void Print1(const short& xx)
 	{
 		printf("STR1: EMPTY %i\n", xx);

@@ -20,6 +20,19 @@
 //=============================================================================================
 
 
+template<typename T, typename... Args>
+struct ClassOverloadMethod {
+	template<typename Ret>
+	static auto get(Ret(T::*)(Args...))->Ret(T::*)(Args...);
+};
+
+template<typename T>
+struct ClassOverloadMethod<T> {
+	template<typename Ret>
+	static auto get(Ret(T::*)())->Ret(T::*)();
+};
+
+
 template<class _Ty>
 struct my_decay
 {

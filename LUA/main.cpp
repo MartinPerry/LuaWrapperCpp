@@ -135,11 +135,35 @@ void luaW_printstack(lua_State* L)
 //==================================================================================================
 
 
-//template<typename T, typename ... Args>
-//using get_print_type = decltype(std::declval<T>().print(std::declval<Args>() ...)) (T::*)(Args ...);
+
+
+template<typename T, typename ... Args>
+using get_print_type = decltype(std::declval<T>().Print0(std::declval<Args>() ...)) (T::*)(Args ...);
+
+/*
+template<typename T, typename U, U ptr, typename... Args>
+struct TypeOverload;
+
+template<typename T, typename U, typename... Args, U(T::* ptr)(Args...)>
+struct TypeOverload<T, U(T::*)(Args...), ptr, Args...>
+{
+	using type = decltype((std::declval<T>().*ptr)(std::declval<Args>() ...)) (T::*)(Args ...);
+};
+
+struct Foo
+{
+	void bar(int, int) {}
+	int baz(double) { return{}; }
+};
+*/
 
 
 
+struct Foo {
+	int foo();
+	int foo(int);
+	int foo(int, int);
+};
 
 
 Lua::LuaScript * Create(LuaString name)
@@ -148,12 +172,28 @@ Lua::LuaScript * Create(LuaString name)
 	//https://john.nachtimwald.com/2014/07/12/wrapping-a-c-library-in-lua/
 
 	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
+
+	//using bar_t = TypeOverload<Account, &Account::Print5, int>::type;
+
+	/*
+	using bar_t = TypeOverload<Foo, void(Foo::*)(int, int), &Foo::bar, int, int>::type;
+	static_assert(std::is_same<bar_t, void(Foo::*)(int, int)>::value, "y");
+
+	using baz_t = TypeOverload<Foo, int(Foo::*)(double), &Foo::baz, double>::type;
+	static_assert(std::is_same<baz_t, int(Foo::*)(double)>::value, "x");
+	*/
+
 	
 
 	//ls->RegisterFunction("Print_fce", NULL);
 	
 	Lua::LuaClassBind<Account> cb("Account");
-	cb.AddMethod("Print0", CLASS_METHOD(Account, Print0));
+	//cb.AddMethod("Print0", LuaCallbacks::function<decltype(std::declval<Account>().Print0()) (Account::*)(), &Account::Print0>);
+	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(Account, Print0));
+	cb.AddMethod("Print0L", CLASS_METHOD_OVERLOAD(Account, Print0, double, double));
+	//cb.AddMethod("Print0L", LuaCallbacks::function<TMP(Account, Print0, double, double), &Account::Print0>);
+	
+	//cb.AddMethod("Print0L", LuaCallbacks::function<TypeOverload<Account, &Account::Print0, double, double>::type, &Account::Print0>);
 	cb.AddMethod("Print1", CLASS_METHOD(Account, Print1));
 	cb.AddMethod("Print2", CLASS_METHOD(Account, Print2));
 	cb.AddMethod("Print3", CLASS_METHOD(Account, Print3));
@@ -323,9 +363,9 @@ int main(int argc, char * argv[])
 	Lua::LuaWrapper::Initialize();
 
 
-	benchmark();
+	//benchmark();
 	//LuaIntfBenchmark("benchmark.lua");
-	return 1;
+	//return 1;
 
 
 
