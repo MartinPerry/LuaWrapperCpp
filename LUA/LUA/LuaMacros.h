@@ -6,7 +6,7 @@
 
 //Enable more type checking when getting pointer from Lua
 //However, this is a bit slower then unsafe version without checks
-#define SAFE_PTR_CHECKS	0
+#define SAFE_PTR_CHECKS	1
 
 //String class used in Lua
 #define LUA_STRING std::string

@@ -23,7 +23,7 @@ namespace Lua
 	class LuaWrapper
 	{
 	public:
-		static void Initialize();
+		static void Initialize(ScriptLoaderCallback loaderCallback);
 		static void Destroy();
 		static LuaWrapper * GetInstance();
 
@@ -34,13 +34,15 @@ namespace Lua
 		bool ExistScript(lua_State * state) const;
 		
 		
+		LuaScript * AddScript(const LuaString & scriptFileName);
 		LuaScript * AddScript(const LuaString & scriptName, const LuaString & scriptFileName);
 
-		void ReloadAll();
-
+		
 		friend class LuaScript;
 
 	protected:
+
+		ScriptLoaderCallback scriptLoaderCallback;
 
 		LuaWrapper();
 		~LuaWrapper();
@@ -49,7 +51,8 @@ namespace Lua
 
 		static LuaWrapper * instance;
 
-		
+		LuaString GetScriptFromFile(const LuaString & scriptFileName);
+
 		std::unordered_map<lua_State *, LuaScript *> luaScripts;
 		//std::unordered_map<MyStringAnsi, void * > globalVariales;
 

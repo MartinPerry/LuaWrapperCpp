@@ -3,7 +3,7 @@
 
 #define WITH_ATTRIBUTES
 
-#define LUA_INTF
+//#define LUA_INTF
 #define LUA_WRAPPER_CPP
 
 //===============================================================================

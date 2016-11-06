@@ -11,7 +11,7 @@ struct lua_State;
 // Other structures
 //#include "../Strings/MyStringAnsi.h"
 #include <string>
-
+#include <functional>
 
 
 typedef LUA_STRING LuaString;
@@ -25,5 +25,6 @@ typedef struct luaL_RegAttr {
 	getSetFunction func;
 } luaL_RegAttr;
 
+typedef std::function<LuaString(const LuaString & filePath)> ScriptLoaderCallback;
 
 #endif

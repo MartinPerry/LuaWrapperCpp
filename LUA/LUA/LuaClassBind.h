@@ -29,10 +29,8 @@ namespace Lua
 		const std::type_index typeIndex;
 		const LuaString ctorName;
 
-		bool returnLightUserData;
-
 		
-		std::function<std::string(void *)> toString;
+		std::function<LuaString(void *)> toString;
 
 		std::vector<luaL_Reg> ctors;
 		std::vector<luaL_Reg> methods;
@@ -52,8 +50,7 @@ namespace Lua
 		LuaClass(const LuaClass & c) : 
 			typeIndex(c.typeIndex),
 			ctorName(c.ctorName)
-		{
-			this->returnLightUserData = c.returnLightUserData;
+		{			
 			this->ctors = c.ctors;
 			this->toString = c.toString;
 			this->methods = c.methods;
@@ -85,8 +82,7 @@ namespace Lua
 			methods.push_back({ 0,0 });
 			attrs.push_back({ 0, 0 });
 			ctors.push_back({ 0,0 });
-			returnLightUserData = false;
-
+			
 			//this->create_new = LuaCallbacks::create_new_default<T>;
 			this->garbage_collect = LuaCallbacks::garbage_collect<T>;
 			this->to_string = LuaCallbacks::to_string<T>;

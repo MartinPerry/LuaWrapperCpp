@@ -108,7 +108,7 @@ a:PrintConst()
 --a:Print7(ee)
 --ee:Print0()
 a:Print0();
-a:Print0L(0, 0);
+a:Print0L(70, 0);
 print("xxxx")
 print(a)
 print(getmetatable(a))

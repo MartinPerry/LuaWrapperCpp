@@ -32,9 +32,7 @@ LuaScript::LuaScript(lua_State * state, const LuaString & scriptName, const LuaS
 
 	this->runCount = 0;
 
-	this->returnLightUserData = false;
-	//this->GetAllSavedVariables();
-
+	this->returnLightUserData = false;	
 }
 
 LuaScript::~LuaScript()
@@ -42,7 +40,7 @@ LuaScript::~LuaScript()
 	lua_close(this->state);	
 }
 
-
+/*
 void LuaScript::Reload()
 {
 	LuaString script = LuaUtils::LoadFromFile(this->scriptFileName);
@@ -59,6 +57,7 @@ void LuaScript::Reload()
 	lua_setglobal(this->state, this->scriptName.c_str());
 
 }
+*/
 
 lua_State * LuaScript::GetState()
 {
@@ -108,7 +107,7 @@ int LuaScript::GetFnReturnValueCount() const
 
 /*-----------------------------------------------------------
 Function:	RegisterFunction
-Parametrs:
+Parameters:
 	[in] luaName - name of function in LUA
 	[in] fn - pointer to C function to be registered
 	
@@ -119,19 +118,24 @@ void LuaScript::RegisterFunction(const LuaString & luaFName, lua_CFunction fn)
 	lua_register( this->state, luaFName.c_str(), fn );
 }
 
+/*-----------------------------------------------------------
+Function:	RegisterClass
+Parameters:
+	[in] classBind - binded class
+
+Register new Lua binding for class
+-------------------------------------------------------------*/
 void LuaScript::RegisterClass(const LuaClass * classBind)
 {
 	this->RegisterClass(*classBind);
 }
 
 /*-----------------------------------------------------------
-Function:	Register
+Function:	RegisterClass
 Parameters:
+	[in] classBind - binded class
 
-Returns:
-
-
-Register new lua binding for class
+Register new Lua binding for class
 -------------------------------------------------------------*/
 void LuaScript::RegisterClass(const LuaClass & classBind)
 {
@@ -150,8 +154,7 @@ void LuaScript::RegisterClass(const LuaClass & classBind)
 	//LuaCallbacks::ctors[key] = classBind.ctor;
 	LuaCallbacks::toString[key] = classBind.toString;
 	LuaCallbacks::tableName[key] = classTableName;
-
-	this->returnLightUserData = classBind.returnLightUserData;
+	
 
 	//http://cfc.kizzx2.com/index.php/binding-c-classes-to-lua-a-step-by-step-example-for-beginners/
 	//http://lua-users.org/lists/lua-l/2006-08/msg00245.html
@@ -264,12 +267,10 @@ std::vector<LuaString> LuaScript::GetAllGlobals()
 Function:	Run
 
 Run script
-- stackPtr = 1 
 - returnValCount = 0 
 -------------------------------------------------------------*/
 void LuaScript::Run()
-{
-	this->stackPtr = 1;
+{	
 	this->returnValCount = 0;
 	
 	//http://stackoverflow.com/questions/6434610/how-can-i-know-return-value-count-of-a-lua-function-from-c
@@ -306,26 +307,31 @@ void LuaScript::Run()
 Function:	Reset
 
 Reset inner variables:
-- stackPtr = 1 
 - returnValCount = 0 
 -------------------------------------------------------------*/
 void LuaScript::Reset()
 {
-	this->stackPtr = 1;
 	this->returnValCount = 0;
 }
 
 
-void LuaScript::IncStack()
-{
-	this->stackPtr++;	
-}
+/*-----------------------------------------------------------
+Function:	PrintStack
 
+Print Lua stack
+-------------------------------------------------------------*/
 void LuaScript::PrintStack()
 {
 	this->PrintStack("");
 }
 
+/*-----------------------------------------------------------
+Function:	PrintStack
+Parameters:
+	[in] id - ID of the stack
+
+Print Lua stack with an ID
+-------------------------------------------------------------*/
 void LuaScript::PrintStack(const LuaString & id)
 {
 	int i = lua_gettop(this->state);

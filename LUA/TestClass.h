@@ -25,8 +25,8 @@ public:
 	Account2 * cc = new Account2(1);
 	//Account * cc = new Account(1);
 	Account() { printf("CTOR\n"); }
-	Account(double i, double v) { printf("CTOR_2\n"); }
-	Account(double balance) { printf("CTOR1\n");  m_balance = balance;; }
+	Account(double i, double v) { printf("CTOR_2 %f %f\n", i, v); }
+	Account(double balance) { printf("CTOR1 %f\n", balance);  m_balance = balance;; }
 	//Account(const Account & c) { m_balance = c.m_balance; printf("CC\n"); };
 	//Account(Account && c) {printf("MC\n"); };
 

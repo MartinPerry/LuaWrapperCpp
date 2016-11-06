@@ -38,11 +38,12 @@ void LuaWrapper::Release()
 }
 
 
-void LuaWrapper::Initialize()
+void LuaWrapper::Initialize(ScriptLoaderCallback loaderCallback)
 {
 	if (instance == NULL)
 	{
 		instance = new LuaWrapper();
+		instance->scriptLoaderCallback = loaderCallback;
 	}
 }
 
@@ -69,12 +70,13 @@ bool LuaWrapper::ExistScript(lua_State * state) const
 
 LuaScript * LuaWrapper::GetScript(lua_State * state)
 {
-	if (!this->ExistScript(state))
+	auto it = this->luaScripts.find(state);
+	if (it == this->luaScripts.end())
 	{
 		return NULL;
 	}
 
-	return this->luaScripts[state];
+	return it->second;
 }
 
 void LuaWrapper::AddClass(const LuaClass & luaClass)
@@ -85,10 +87,24 @@ void LuaWrapper::AddClass(const LuaClass & luaClass)
 	this->classes[c->ctorName] = c;
 }
 
+LuaString LuaWrapper::GetScriptFromFile(const LuaString & scriptFileName)
+{
+	if (this->scriptLoaderCallback == nullptr)
+	{
+		return LuaUtils::LoadFromFile(scriptFileName);
+	}
+
+	return this->scriptLoaderCallback(scriptFileName);
+}
+
+LuaScript * LuaWrapper::AddScript(const LuaString & scriptFileName)
+{
+	return this->AddScript(scriptFileName, scriptFileName);
+}
 
 LuaScript * LuaWrapper::AddScript(const LuaString & scriptName, const LuaString & scriptFileName)
 {
-	LuaString script = LuaUtils::LoadFromFile(scriptFileName.c_str());
+	LuaString script = this->GetScriptFromFile(scriptFileName);
 
 	lua_State * state = luaL_newstate();
 	//int status = luaL_loadstring( state, script.GetConstString() );
@@ -124,13 +140,3 @@ LuaScript * LuaWrapper::AddScript(const LuaString & scriptName, const LuaString 
 	return ls;
 }
 
-void LuaWrapper::ReloadAll()
-{
-	std::unordered_map<lua_State *, LuaScript *>::iterator it;
-
-	for (it = this->luaScripts.begin(); it != this->luaScripts.end(); it++)
-	{
-		it->second->Reload();
-	}
-
-}

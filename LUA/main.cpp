@@ -190,11 +190,13 @@ int main(int argc, char * argv[])
 
 	return 0;
 	*/
-	Lua::LuaWrapper::Initialize();
+	Lua::LuaWrapper::Initialize([](const LuaString & str) -> LuaString {
+		return Lua::LuaUtils::LoadFromFile(str);
+	});
 
 
-	RunBenchmark();
-	return 1;
+	//RunBenchmark();
+	//return 1;
 
 
 
@@ -204,8 +206,7 @@ int main(int argc, char * argv[])
 
 	
 	Lua::LuaScript *ls = Create("t2.lua");
-	lua_State * L = ls->GetState();
-
+	
 
 	
 	//lua_boxpointer(L, aa);

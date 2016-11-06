@@ -19,18 +19,18 @@ extern "C"
 
 
 template <typename T>
-LUA_INLINE T * LuaScript::GetFnInputImpl(LuaScript::tag<T *>)
+LUA_INLINE T * LuaScript::GetFnInputImpl(int i, LuaScript::tag<T *>)
 {	
-	int argType = lua_type(this->state, this->stackPtr);
+	int argType = lua_type(this->state, i);
 
 	if (argType == LUA_TUSERDATA)
 	{
-		T * a = (*(T **)(lua_touserdata(this->state, this->stackPtr++)));
+		T * a = (*(T **)(lua_touserdata(this->state, i)));
 		return a;
 	}
 	else if (argType == LUA_TLIGHTUSERDATA)
 	{
-		return static_cast<T *>(lua_touserdata(this->state, this->stackPtr++));
+		return static_cast<T *>(lua_touserdata(this->state, i));
 	}
 	else
 	{
@@ -39,28 +39,28 @@ LUA_INLINE T * LuaScript::GetFnInputImpl(LuaScript::tag<T *>)
 };
 
 
-LUA_INLINE bool LuaScript::GetFnInputImpl(LuaScript::tag<bool>)
+LUA_INLINE bool LuaScript::GetFnInputImpl(int i, LuaScript::tag<bool>)
 {
-	return (lua_toboolean(this->state, this->stackPtr++) == 1);
-}
+	return (lua_toboolean(this->state, i) == 1);
+};
 
 
-LUA_INLINE float LuaScript::GetFnInputImpl(LuaScript::tag<float>)
+LUA_INLINE float LuaScript::GetFnInputImpl(int i, LuaScript::tag<float>)
 {
-	return static_cast<float>(lua_tonumber(this->state, this->stackPtr++));
-}
+	return static_cast<float>(lua_tonumber(this->state, i));
+};
 
-LUA_INLINE double LuaScript::GetFnInputImpl(LuaScript::tag<double>)
+LUA_INLINE double LuaScript::GetFnInputImpl(int i, LuaScript::tag<double>)
 {
-	return lua_tonumber(this->state, this->stackPtr++);
-}
+	return lua_tonumber(this->state, i);
+};
 
 
-LUA_INLINE LuaString LuaScript::GetFnInputImpl(LuaScript::tag<LuaString>)
+LUA_INLINE LuaString LuaScript::GetFnInputImpl(int i, LuaScript::tag<LuaString>)
 {
-	const char * str = lua_tostring(this->state, this->stackPtr++);
+	const char * str = lua_tostring(this->state, i);
 	return str;
-}
+};
 
 
 

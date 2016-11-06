@@ -22,6 +22,21 @@ How to use it
 You just have to include `LuaWrapperCpp.h`. 
 There are no external dependencies, except Lua library (version 5.2 is included in the project)
 
+First, you have to start with `LuaWrapper` initialization, which is a singleton class:
+
+````c++
+Lua::LuaWrapper::Initialize([](const LuaString & filePath) -> LuaString {
+		return Lua::LuaUtils::LoadFromFile(filePath);
+	});	
+````
+
+You must provide script loading functor. 
+This is usefull, if you have a virtual file system and you need to handle loading in a different way.
+Function must return loaded string with a script.
+You can also pass `nullptr`, in that case default loading `Lua::LuaUtils::LoadFromFile(filePath)` will be used.
+
+
+
 
 Binding C++ class to wrapper
 ------------------------------------------
@@ -205,7 +220,7 @@ print(a:balance())
 As you can see from above test, our wrapper in "unsafe" mode (SAFE_PTR_CHECKS 0) is faster, however, you are loosing type control.
 This solution is recomended for release builds and only if scripts have already been tested and are working.
 
-If we bind class-methods and members together, but members are not used, our wrapper is slower (see Test #3). 
+If we bind class-methods and members together, but members are not used, our wrapper is slower (see Test #4). 
 That is because each method call goes through `__index` metamethod and it slows thing down a bit. 
 We should inspect Lua code before actual binding and see, if members are used and based on this disable `__index` call. 
 However, this is in our TO-DO list and right now, other things are more important.

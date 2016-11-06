@@ -19,6 +19,12 @@
 //=============================================================================================
 
 
+struct StackTop
+{
+	static const int CLASS = 2; //we start with 2, because 1 is class instance itself
+	static const int METHOD = 1; //we start with 1, because there are no "hidden" arguments
+};
+
 template<typename T, typename... Args>
 struct ClassOverloadMethod {
 	template<typename Ret>
@@ -77,16 +83,17 @@ struct getTuple;
 template <typename T, typename ...Args>
 struct getTuple<T, Args...>
 {
-	static inline std::tuple<T, Args...> get(Lua::LuaScript * script)
+	static inline std::tuple<T, Args...> get(Lua::LuaScript * script, int i)
 	{
+		
 		/*
 		std::tuple<T> t = std::make_tuple<T>(script->GetFnInput<T>());
 		std::tuple<Args...> args = getTuple<Args...>::get(script);
 		return std::tuple_cat(t, args);
 		*/
 
-		std::tuple<T> t = std::forward_as_tuple(script->GetFnInput<T>());
-		std::tuple<Args...> args = getTuple<Args...>::get(script);
+		std::tuple<T> t = std::forward_as_tuple(script->GetFnInput<T>(i));
+		std::tuple<Args...> args = getTuple<Args...>::get(script, i + 1);
 		return std::tuple_cat(std::move(t), std::move(args));
 
 		/*
@@ -101,7 +108,7 @@ struct getTuple<T, Args...>
 template <>
 struct getTuple<>
 {
-	static inline std::tuple<> get(Lua::LuaScript * script)
+	static inline std::tuple<> get(Lua::LuaScript * script, int i)
 	{
 		return std::make_tuple<>();
 	}
@@ -173,13 +180,13 @@ struct func_impl_class_method<Res(ClassType::*)(Args...), MethodName, std::index
 	
 	static void call(ClassType * obj, Lua::LuaScript * s)
 	{
-		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s, StackTop::CLASS);
 		(obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);		
 	}
 
 	static Res callWithReturn(ClassType * obj, Lua::LuaScript * s)
 	{
-		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s, StackTop::CLASS);
 		return (obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);
 	}
 };
@@ -195,13 +202,13 @@ struct func_impl_class_method<Res(ClassType::*)(Args...) const, MethodName, std:
 {
 	static void call(ClassType * obj, Lua::LuaScript * s)
 	{
-		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s, StackTop::CLASS);
 		(obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);
 	}
 
 	static Res callWithReturn(ClassType * obj, Lua::LuaScript * s)
 	{
-		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s, StackTop::CLASS);
 		return (obj->*MethodName)(std::forward<Args>(std::get<Is>(tmp))...);
 	}
 };
@@ -259,13 +266,13 @@ struct func_impl_method<Res(*)(Args...), MethodName, std::index_sequence<Is...>>
 	
 	static void call(Lua::LuaScript * s)
 	{
-		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s, StackTop::METHOD);
 		(MethodName)(std::forward<Args>((std::get<Is>(tmp)))...);
 	}
 
 	static Res callWithReturn(Lua::LuaScript * s)
 	{
-		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s, StackTop::METHOD);
 		return (MethodName)(std::forward<Args>((std::get<Is>(tmp)))...);
 	}
 };
@@ -317,8 +324,7 @@ struct LuaCallbacks
 #define LUA_CLASS_FUNCTION_BODY \
 		MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1); \
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L); \
-		script->Reset(); \
-		script->IncStack(); 
+		script->Reset();		
 
 	//=============================================================================================
 	// Class callbacks
@@ -431,15 +437,14 @@ struct LuaCallbacks
 		ClassType *a = LuaCallbacks::GetPtr<ClassType>(L, 1);
 		Lua::LuaScript * script = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		script->Reset();
-		script->IncStack();
-			
+		
 		if (type == AttrCallType::GET)
 		{
 			script->AddFnReturnValue(a->*MemPtr);
 		}
 		else if (type == AttrCallType::SET)
 		{
-			a->*MemPtr = script->GetFnInput<T>();
+			a->*MemPtr = script->GetFnInput<T>(StackTop::CLASS);
 		}
 		
 
@@ -500,7 +505,7 @@ struct LuaCallbacks
 
 		Lua::LuaScript * s = Lua::LuaWrapper::GetInstance()->GetScript(L);
 		s->Reset();
-		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s);
+		auto tmp = getTuple<typename my_decay<Args>::type...>::get(s, 1); //we start with 1 -> ctor in Lua is call of regular method
 		return new T(std::forward<Args>((std::get<S>(tmp)))...);
 	}
 

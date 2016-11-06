@@ -29,8 +29,24 @@
 
 namespace Lua
 {
+	/*-----------------------------------------------------------
+	LuaUtils
+
+	Utilities class for Lua Wrapper
+	-------------------------------------------------------------*/
 	struct LuaUtils 
 	{
+		/*-----------------------------------------------------------
+		Function:	CopyString
+		Parameters:
+			[in] str - reference to string class
+		Returns:
+			newly created C string
+
+		Create new C-like string in "const char *" and return it
+		filled with content of str. 
+		The newly created string must be deleted !!!
+		-------------------------------------------------------------*/
 		static const char * CopyString(const LuaString & str)
 		{
 			char * strCopy = new char[str.length() + 1];
@@ -40,6 +56,15 @@ namespace Lua
 			return strCopy;			
 		};
 
+		/*-----------------------------------------------------------
+		Function:	LoadFromFile
+		Parameters:
+			[in] filePath - file path
+		Returns:
+			string allocated from file content
+
+		Open text file and load its content into returned string
+		-------------------------------------------------------------*/
 		static LuaString LoadFromFile(const LuaString & filePath)
 		{
 			FILE *f = NULL;  //pointer to file we will read in
