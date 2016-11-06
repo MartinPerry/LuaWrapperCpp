@@ -104,10 +104,108 @@ The above binded class can be called from Lua as
 
 Benchmark & comparison
 ------------------------------------------
-We have compared our solution with [lua-itnf](https://github.com/SteveKChiu/lua-intf)
+We have compared our solution with [lua-intf](https://github.com/SteveKChiu/lua-intf)
 
-TO DO - add timings and other comparisons
+````c++
+class Account {
+public:
+	double val = 148;
+	Account(double balance) { m_balance = balance; }
+	void deposit(double amount) { m_balance += amount; }
+	double balance(void) { return m_balance; }
+}
+````
 
+Test #1
+Only class-methods exposed to Lua
+
+````lua
+a = Account(150)
+
+for i=1, 10000000 do
+	a:deposit(i)
+end
+
+print(a:balance())
+````
+
+| Wrapper       | Time [ms]     |
+| ------------- |:-------------:|
+| Ours          | 927 (SAFE_PTR_CHECKS 1) / 605 (SAFE_PTR_CHECKS 0) |
+| Lua-intf      | 1183 |
+
+
+Test #2
+Class-members exposed to Lua
+
+````lua
+a = Account(150)
+
+for i=1, 10000000 do
+	a.val = a.val + i
+end
+
+print(a.val)
+````
+
+| Wrapper       | Time [ms]     |
+| ------------- |:-------------:|
+| Ours          | 2688 (SAFE_PTR_CHECKS 1) / 2133 (SAFE_PTR_CHECKS 0) |
+| Lua-intf      | 4305 |
+
+
+Test #3
+Class-methods and members exposed to Lua
+
+````lua
+a = Account(150)
+
+for i=1, 10000000 do
+	a:deposit(i)
+end
+
+print(a:balance())
+
+for i=1, 10000000 do
+	a.val = a.val + i
+end
+
+print(a.val)
+````
+
+| Wrapper       | Time [ms]     |
+| ------------- |:-------------:|
+| Ours          | 4413 (SAFE_PTR_CHECKS 1) / 3241 (SAFE_PTR_CHECKS 0) |
+| Lua-intf      | 5467 |
+
+
+Test #4
+Class-methods and members exposed to Lua
+
+````lua
+a = Account(150)
+
+for i=1, 10000000 do
+	a:deposit(i)
+end
+
+print(a:balance())
+````
+
+| Wrapper       | Time [ms]     |
+| ------------- |:-------------:|
+| Ours          | 1511 (SAFE_PTR_CHECKS 1) / 1172 (SAFE_PTR_CHECKS 0) |
+| Lua-intf      | 1112 |
+
+
+As you can see from above test, our wrapper in "unsafe" mode (SAFE_PTR_CHECKS 0) is faster, however, you are loosing type control.
+This solution is recomended for release builds and only if scripts have already been tested and are working.
+
+If we bind class-methods and members together, but members are not used, our wrapper is slower (see Test #3). 
+That is because each method call goes through `__index` metamethod and it slows thing down a bit. 
+We should inspect Lua code before actual binding and see, if members are used and based on this disable `__index` call. 
+However, this is in our TO-DO list and right now, other things are more important.
+So, if you are not using class-members in your code, do not bind them to Lua.
 
 References
 ------------------------------------------
@@ -117,6 +215,8 @@ Lua reference manual helper:
 * http://pgl.yoyo.org/luai/i/_
 
 Stackoverflow questions related to this project:
+
+- Many thanks to those, who helped. Without them, it would not be possible to create this
 
 * http://stackoverflow.com/questions/40060728/c-make-tupple-from-variadic-template
 

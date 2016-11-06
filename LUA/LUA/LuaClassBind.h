@@ -17,8 +17,10 @@ extern "C"
 #include <typeinfo>
 
 #include "./LuaMacros.h"
+#include "./LuaTypes.h"
 
-#include "../Strings/MyStringAnsi.h"
+
+#include "./LuaUtils.h"
 
 namespace Lua
 {
@@ -96,23 +98,20 @@ namespace Lua
 		~LuaClassBind()
 		{
 			for (size_t i = 0; i < methods.size(); i++)
-			{
-				delete[] methods[i].name;
-				methods[i].name = NULL;
+			{				
+				LUA_SAFE_DELETE_ARRAY(methods[i].name);
 			}
 			methods.clear();
 
 			for (size_t i = 0; i < ctors.size(); i++)
-			{
-				delete[] ctors[i].name;
-				ctors[i].name = NULL;
+			{				
+				LUA_SAFE_DELETE_ARRAY(ctors[i].name);
 			}
 			ctors.clear();
 
 			for (size_t i = 0; i < attrs.size(); i++)
 			{
-				delete[] attrs[i].name;
-				attrs[i].name = NULL;
+				LUA_SAFE_DELETE_ARRAY(attrs[i].name);				
 			}
 			attrs.clear();
 		}
@@ -124,14 +123,16 @@ namespace Lua
 		}
 		
 		template <typename... Args>
-		void AddCtor(const MyStringAnsi & name)
+		void AddCtor(const LuaString & name)
 		{		
 			if (name == this->ctorName)
 			{
 				//user specified ctor is named same as default ctor
 				return;
 			}
-			name.FillString(ctors[ctors.size() - 1].name);
+			
+			ctors[ctors.size() - 1].name = LuaUtils::CopyString(name);
+			//name.FillString(ctors[ctors.size() - 1].name);
 			ctors[ctors.size() - 1].func = LuaCallbacks::create_new<T, Args...>;
 			ctors.push_back({ 0,0 });
 		}
@@ -143,14 +144,16 @@ namespace Lua
 
 		void AddMethod(const LuaString & name, lua_CFunction f)
 		{
-			name.FillString(methods[methods.size() - 1].name);			
+			methods[methods.size() - 1].name = LuaUtils::CopyString(name);
+			//name.FillString(methods[methods.size() - 1].name);			
 			methods[methods.size() - 1].func = f;
 			methods.push_back({ 0,0 });
 		};
 
 		void AddAttribute(const LuaString & name, getSetFunction f)
 		{
-			name.FillString(attrs[attrs.size() - 1].name);
+			attrs[attrs.size() - 1].name = LuaUtils::CopyString(name);
+			//name.FillString(attrs[attrs.size() - 1].name);
 			attrs[attrs.size() - 1].func = f;
 			attrs.push_back({ 0,0 });
 		};

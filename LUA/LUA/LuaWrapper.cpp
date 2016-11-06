@@ -1,12 +1,10 @@
 #include "./LuaWrapper.h"
 
 
-#include "../Logger.h"
 
 #include "./LuaWrapperCpp.h"
 
 
-//using namespace MyUtils;
 using namespace Lua;
 
 LuaWrapper * LuaWrapper::instance = NULL;
@@ -25,7 +23,7 @@ void LuaWrapper::Release()
 {	
 	for (auto it = this->luaScripts.begin(); it != this->luaScripts.end(); it++)
 	{
-		SAFE_DELETE(it->second);		
+		LUA_SAFE_DELETE(it->second);		
 	}
 	this->luaScripts.clear();
 
@@ -33,7 +31,7 @@ void LuaWrapper::Release()
 	
 	for (auto it = this->classes.begin(); it != this->classes.end(); it++)
 	{
-		SAFE_DELETE(it->second);
+		LUA_SAFE_DELETE(it->second);
 	}
 	this->classes.clear();
 
@@ -50,7 +48,7 @@ void LuaWrapper::Initialize()
 
 void LuaWrapper::Destroy()
 {
-	SAFE_DELETE(instance);
+	LUA_SAFE_DELETE(instance);
 }
 
 LuaWrapper * LuaWrapper::GetInstance()
@@ -90,14 +88,14 @@ void LuaWrapper::AddClass(const LuaClass & luaClass)
 
 LuaScript * LuaWrapper::AddScript(const LuaString & scriptName, const LuaString & scriptFileName)
 {
-	MyStringAnsi script = MyStringAnsi::LoadFromFile(scriptFileName.c_str());
+	LuaString script = LuaUtils::LoadFromFile(scriptFileName.c_str());
 
 	lua_State * state = luaL_newstate();
 	//int status = luaL_loadstring( state, script.GetConstString() );
-	int status = luaL_loadbuffer(state, script.c_str(), script.GetLength(), scriptName.c_str());
+	int status = luaL_loadbuffer(state, script.c_str(), script.length(), scriptName.c_str());
 	if( status )
     {
-		MY_LOG_ERROR("Failed to load LUA script %s : %s", scriptName.c_str(),
+		LUA_LOG_ERROR("Failed to load LUA script %s : %s", scriptName.c_str(),
 			lua_tostring( state, -1 ));
         
 		return NULL;

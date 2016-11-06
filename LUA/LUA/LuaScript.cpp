@@ -1,8 +1,13 @@
 #include "./LuaScript.h"
 
+extern "C"
+{
+	#include "./lua_lib/lua.h"
+	#include "./lua_lib/lualib.h"
+	#include "./lua_lib/lauxlib.h"
+}
 
 
-#include "../Logger.h"
 #include "./LuaCallbacks.h"
 
 
@@ -40,12 +45,12 @@ LuaScript::~LuaScript()
 
 void LuaScript::Reload()
 {
-	MyStringAnsi script = MyStringAnsi::LoadFromFile(this->scriptFileName.c_str());
+	LuaString script = LuaUtils::LoadFromFile(this->scriptFileName);
 
-	int status = luaL_loadbuffer(this->state, script.c_str(), script.GetLength(), this->scriptName.c_str());
+	int status = luaL_loadbuffer(this->state, script.c_str(), script.length(), this->scriptName.c_str());
 	if (status)
 	{
-		MY_LOG_ERROR("Failed to load LUA script %s : %s", this->scriptName.c_str(),
+		LUA_LOG_ERROR("Failed to load LUA script %s : %s", this->scriptName.c_str(),
 			lua_tostring(state, -1));
 
 		return;
@@ -134,7 +139,7 @@ void LuaScript::RegisterClass(const LuaClass & classBind)
 
 	if (LuaCallbacks::tableName.find(key) != LuaCallbacks::tableName.end())
 	{
-		MY_LOG_ERROR("Class %s already registered - std::type_index already exist",
+		LUA_LOG_ERROR("Class %s already registered - std::type_index already exist",
 			classBind.ctorName.c_str());
 		return;
 	}
@@ -289,7 +294,7 @@ void LuaScript::Run()
 
 	if (status != 0)
 	{
-		MY_LOG_ERROR("Failed to run LUA script %s : %s", this->scriptName.c_str(),
+		LUA_LOG_ERROR("Failed to run LUA script %s : %s", this->scriptName.c_str(),
 			lua_tostring( this->state, -1 ));
         
 	}
@@ -390,3 +395,10 @@ LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, const LuaStri
 	lua_pushstring(this->state, val.c_str());
 	lua_setglobal(this->state, varName.c_str());
 };
+
+
+
+
+
+
+

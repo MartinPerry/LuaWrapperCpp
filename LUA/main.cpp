@@ -5,8 +5,6 @@
 #include "./LUA/LuaWrapperCpp.h"
 
 
-#include "./Strings/MyString.h"
-
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
@@ -19,28 +17,11 @@
 #include <tuple>
 #include <vector>
 
-//#define LUA_INTF
-#ifdef LUA_INTF
-#include <LuaIntf/LuaIntf.h>
-#endif
+#include "Benchmarks.h"
 
 //=================================================================================================
 //=================================================================================================
 //=================================================================================================
-
-#define START t1 = chrono::high_resolution_clock::now()
-#define END t2 = chrono::high_resolution_clock::now()
-#define PRINT_TIME cout << "Time: " << std::chrono::duration_cast<chrono::milliseconds>(t2 - t1).count() << " ms" << endl
-#define ANTI_OPTIMALIZATION double sum = 0; for (int i = 0; i < ARR_SIZE; i++) { sum += res[i]; } cout << "Array sum = " << sum << endl;
-#define RESET_ARRAY for (int i = 0; i < ARR_SIZE; i++) { res[i] = 0;}
-
-
-
-
-//=================================================================================================
-//=================================================================================================
-//=================================================================================================
-
 
 //https://github.com/SteveKChiu/lua-intf
 
@@ -50,14 +31,6 @@
 //=================================================================================================
 //=================================================================================================
 #include "./TestClass.h"
-
-
-
-
-
-//=================================================================================================
-//=================================================================================================
-//=================================================================================================
 
 //=================================================================================================
 //=================================================================================================
@@ -79,18 +52,8 @@ int HelloMethodParamReturn(int v)
 	return v + 1;
 }
 
-//=================================================================================================
-//=================================================================================================
-//=================================================================================================
 
 
-
-
-//=================================================================================================
-//=================================================================================================
-//=================================================================================================
-
-using namespace std;
 
 
 
@@ -103,31 +66,6 @@ using namespace std;
 
 template<typename T, typename ... Args>
 using get_print_type = decltype(std::declval<T>().Print0(std::declval<Args>() ...)) (T::*)(Args ...);
-
-/*
-template<typename T, typename U, U ptr, typename... Args>
-struct TypeOverload;
-
-template<typename T, typename U, typename... Args, U(T::* ptr)(Args...)>
-struct TypeOverload<T, U(T::*)(Args...), ptr, Args...>
-{
-	using type = decltype((std::declval<T>().*ptr)(std::declval<Args>() ...)) (T::*)(Args ...);
-};
-
-struct Foo
-{
-	void bar(int, int) {}
-	int baz(double) { return{}; }
-};
-*/
-
-
-
-struct Foo {
-	int foo();
-	int foo(int);
-	int foo(int, int);
-};
 
 
 Lua::LuaScript * Create(LuaString name)
@@ -231,19 +169,6 @@ void doSomething(MyClass * cl)
 	(cl->*MemPtr)++;
 }
 
-/*
-template <class MT>
-struct arg_info;
-
-template <class T, class Res, typename M>
-struct arg_info<Res T::*MemPtr>
-{
-	typedef M MemPtr;
-	typedef T ClassType;
-	typedef Res RetVal;	
-};
-*/
-
 template<typename T, T t>
 void doSomething2()
 {
@@ -251,71 +176,7 @@ void doSomething2()
 }
 
 
-void benchmark()
-{
-	
-	srand(time(NULL));
 
-	Lua::LuaScript *ls = Create("benchmark.lua");
-
-	const int COUNT = 1000000;
-	const int ARR_SIZE = 100000;
-
-	chrono::high_resolution_clock::time_point t1;
-	chrono::high_resolution_clock::time_point t2;
-	double res[ARR_SIZE];
-
-
-	START;
-	ls->Run();
-	END;
-	PRINT_TIME;
-
-
-	START;
-	Account * a = new Account(150);
-	for (int i = 1; i < 10000000; i++)
-	{
-		a->deposit(i);
-	}
-	for (int i = 1; i < 10000000; i++)
-	{
-		a->val += i;
-	}
-	printf("%f\n", a->balance());
-	printf("%f\n", a->val);
-	END;
-	PRINT_TIME;
-}
-
-#ifdef LUA_INTF
-void LuaIntfBenchmark(MyStringAnsi name)
-{
-	const int COUNT = 1000000;
-	const int ARR_SIZE = 100000;
-
-	chrono::high_resolution_clock::time_point t1;
-	chrono::high_resolution_clock::time_point t2;
-	double res[ARR_SIZE];
-
-
-
-	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
-	lua_State * L = ls->GetState();
-
-	LuaIntf::LuaBinding(L).beginClass<Account>("Account")
-		.addConstructor(LUA_ARGS(double))		
-		.addFunction("balance", &Account::balance, LUA_ARGS())
-		.addFunction("deposit", &Account::deposit, LUA_ARGS(double))
-		.addVariable("vv", &Account::val, &Account::val)
-		.endClass();
-
-	START;
-	ls->Run();
-	END;
-	PRINT_TIME;
-}
-#endif
 
 int main(int argc, char * argv[])
 {
@@ -332,9 +193,8 @@ int main(int argc, char * argv[])
 	Lua::LuaWrapper::Initialize();
 
 
-	//benchmark();
-	//LuaIntfBenchmark("benchmark.lua");
-	//return 1;
+	RunBenchmark();
+	return 1;
 
 
 

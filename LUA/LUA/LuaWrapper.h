@@ -11,8 +11,10 @@ struct lua_State;
 #include <unordered_map>
 #include <unordered_set>
 
-#include "../Strings/MyStringAnsi.h"
-#include "../Macros.h"
+
+#include "./LuaMacros.h"
+#include "./LuaTypes.h"
+#include "./LuaScript.h"
 #include "./LuaClassBind.h"
 
 namespace Lua

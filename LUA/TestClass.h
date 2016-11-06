@@ -1,7 +1,8 @@
 #ifndef TEST_CLASS_H
 #define TEST_CLASS_H
 
-#include "./Strings/MyStringAnsi.h"
+
+#include "./Lua/LuaTypes.h"
 
 class Account2 {
 public:
@@ -20,12 +21,12 @@ class Account {
 public:
 
 	double val = 148;
-	MyStringAnsi xx = "ahoj aatr";
+	LuaString xx = "ahoj aatr";
 	Account2 * cc = new Account2(1);
 	//Account * cc = new Account(1);
-	Account() { printf("CTOR"); }
-	Account(double i, double v) { printf("CTOR_2"); }
-	Account(double balance) { printf("CTOR1");  m_balance = balance;; }
+	Account() { printf("CTOR\n"); }
+	Account(double i, double v) { printf("CTOR_2\n"); }
+	Account(double balance) { printf("CTOR1\n");  m_balance = balance;; }
 	//Account(const Account & c) { m_balance = c.m_balance; printf("CC\n"); };
 	//Account(Account && c) {printf("MC\n"); };
 
@@ -59,13 +60,12 @@ public:
 		printf("STR1: EMPTY %i\n", xx);
 	}
 
-	void Print2(MyStringAnsi tt, int ii, int jj)
+	void Print2(LuaString tt, int ii, int jj)
 	{
 		printf("STR2: %s %i %i\n", tt.c_str(), ii, jj);
 	}
-
-	//void Print3(const MyStringAnsi & tt, int ii, int jj)
-	void Print3(const MyStringAnsi & tt, int ii, int jj)
+	
+	void Print3(const LuaString & tt, int ii, int jj)
 	{
 		printf("STR3: %s %i %i\n", tt.c_str(), ii, jj);
 	}

@@ -2,17 +2,18 @@
 #define LUA_SCRIPT_H
 
 
+#include <typeinfo>
+#include <typeindex>
+#include <type_traits>
 
 #include <vector>
 
-
-#include "../Macros.h"
-#include "../Strings/MyStringAnsi.h"
-
-
 #include "./LuaWrapper.h"
 #include "./LuaClassBind.h"
+
 #include "./LuaMacros.h"
+#include "./LuaTypes.h"
+
 
 
 
@@ -73,13 +74,6 @@ namespace Lua
 				return GetFnInputImpl(tag<T>{});
 			};
 
-			//=============================================================================
-			//===================== Get data returned from LUA (stack at -1) ================================
-			//=============================================================================
-
-
-			template <typename T>
-			T GetReturnValue();
 			
 			//=============================================================================
 			//===================== Push data to LUA stack ================================
@@ -199,6 +193,10 @@ namespace Lua
 			float GetFnInputImpl(tag<float>);
 			bool GetFnInputImpl(tag<bool>);
 			LuaString GetFnInputImpl(tag<LuaString>);
+
+
+
+			
 
 		};
 

@@ -4,13 +4,11 @@
 
 extern "C"
 {
-	#include "./lua_lib/lua.h"
-	#include "./lua_lib/lualib.h"
-	#include "./lua_lib/lauxlib.h"
+#include "./lua_lib/lua.h"
+#include "./lua_lib/lualib.h"
+#include "./lua_lib/lauxlib.h"
 }
 
-#include <typeinfo>
-#include <typeindex>
 
 
 
@@ -18,10 +16,6 @@ extern "C"
 //=============================================================================
 //===================== Get data passed from Lua callback function ============
 //=============================================================================
-
-
-//template<>
-//struct LuaScript::item_return<const MyStringAnsi &> { typedef MyStringAnsi type; };
 
 
 template <typename T>
@@ -69,56 +63,6 @@ LUA_INLINE LuaString LuaScript::GetFnInputImpl(LuaScript::tag<LuaString>)
 }
 
 
-//=============================================================================
-//===================== Get data returned from LUA (stack at -1) ==============
-//=============================================================================
-
-template <typename T>
-T LuaScript::GetReturnValue()
-{
-	void * data = lua_touserdata(this->state, -1);
-	return static_cast<T>(data);
-};
-
-
-template <>
-inline int LuaScript::GetReturnValue()
-{
-	return static_cast<int>(lua_tointeger(this->state, 1));
-};
-
-
-template <>
-LUA_INLINE MyStringAnsi LuaScript::GetReturnValue()
-{
-	const char * str = lua_tostring(this->state, 1);
-	return str;
-}
-
-
-template <>
-LUA_INLINE uint32 LuaScript::GetReturnValue()
-{
-	return lua_tounsigned(this->state, 1);
-}
-
-template <>
-LUA_INLINE bool LuaScript::GetReturnValue()
-{
-	return (lua_toboolean(this->state, 1) == 1);
-}
-
-template <>
-LUA_INLINE float LuaScript::GetReturnValue()
-{
-	return static_cast<float>(lua_tonumber(this->state, -1));
-}
-
-template <>
-LUA_INLINE double LuaScript::GetReturnValue()
-{
-	return lua_tonumber(this->state, 1);
-}
 
 //=============================================================================
 //===================== Push data to LUA stack ================================
