@@ -106,7 +106,9 @@ Benchmark & comparison
 ------------------------------------------
 We have compared our solution with [lua-intf](https://github.com/SteveKChiu/lua-intf)
 
-Our solution is compared in two modes: X (SAFE_PTR_CHECKS 1) / Y (SAFE_PTR_CHECKS 0)
+
+Our solution is compared in two modes: X (`SAFE_PTR_CHECKS 1`) / Y (`SAFE_PTR_CHECKS 0`)
+`SAFE_PTR_CHECKS` macro is located in `LuaMacros.h`
 
 ````c++
 class Account {
@@ -218,7 +220,7 @@ Lua reference manual helper:
 
 Stackoverflow questions related to this project:
 
-- Many thanks to those, who helped. Without them, it would not be possible to create this
+Many thanks to those, who helped. Without them, it would not be possible to create this
 
 * http://stackoverflow.com/questions/40060728/c-make-tupple-from-variadic-template
 
