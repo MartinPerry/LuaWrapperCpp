@@ -106,6 +106,8 @@ Benchmark & comparison
 ------------------------------------------
 We have compared our solution with [lua-intf](https://github.com/SteveKChiu/lua-intf)
 
+Our solution is compared in two modes: X (SAFE_PTR_CHECKS 1) / Y (SAFE_PTR_CHECKS 0)
+
 ````c++
 class Account {
 public:
@@ -131,7 +133,7 @@ print(a:balance())
 
 | Wrapper       | Time [ms]     |
 | ------------- |:-------------:|
-| Ours          | 927 (SAFE_PTR_CHECKS 1) / 605 (SAFE_PTR_CHECKS 0) |
+| Ours          | 927 / 605  |
 | Lua-intf      | 1183 |
 
 
@@ -150,7 +152,7 @@ print(a.val)
 
 | Wrapper       | Time [ms]     |
 | ------------- |:-------------:|
-| Ours          | 2688 (SAFE_PTR_CHECKS 1) / 2133 (SAFE_PTR_CHECKS 0) |
+| Ours          | 2688 / 2133  |
 | Lua-intf      | 4305 |
 
 
@@ -175,7 +177,7 @@ print(a.val)
 
 | Wrapper       | Time [ms]     |
 | ------------- |:-------------:|
-| Ours          | 4413 (SAFE_PTR_CHECKS 1) / 3241 (SAFE_PTR_CHECKS 0) |
+| Ours          | 4413 / 3241 |
 | Lua-intf      | 5467 |
 
 
@@ -194,7 +196,7 @@ print(a:balance())
 
 | Wrapper       | Time [ms]     |
 | ------------- |:-------------:|
-| Ours          | 1511 (SAFE_PTR_CHECKS 1) / 1172 (SAFE_PTR_CHECKS 0) |
+| Ours          | 1511 / 1172 |
 | Lua-intf      | 1112 |
 
 
