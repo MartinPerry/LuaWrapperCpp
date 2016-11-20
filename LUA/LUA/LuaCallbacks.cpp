@@ -1,7 +1,7 @@
 #include "./LuaCallbacks.h"
 
 std::unordered_map<std::type_index, LuaString > LuaCallbacks::tableName;
-std::unordered_map<std::type_index, std::function<std::string(void *)> > LuaCallbacks::toString;
+std::unordered_map<std::type_index, std::shared_ptr<LuaClassToString> > LuaCallbacks::toString;
 
 
 static void iterate_and_print(lua_State *L, int index)

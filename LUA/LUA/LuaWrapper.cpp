@@ -21,10 +21,7 @@ LuaWrapper::~LuaWrapper()
 
 void LuaWrapper::Release()
 {	
-	for (auto it = this->luaScripts.begin(); it != this->luaScripts.end(); it++)
-	{
-		LUA_SAFE_DELETE(it->second);		
-	}
+	
 	this->luaScripts.clear();
 
 	
@@ -68,7 +65,7 @@ bool LuaWrapper::ExistScript(lua_State * state) const
 	return true;
 }
 
-LuaScript * LuaWrapper::GetScript(lua_State * state)
+std::shared_ptr<LuaScript> LuaWrapper::GetScript(lua_State * state)
 {
 	auto it = this->luaScripts.find(state);
 	if (it == this->luaScripts.end())
@@ -97,12 +94,12 @@ LuaString LuaWrapper::GetScriptFromFile(const LuaString & scriptFileName)
 	return this->scriptLoaderCallback(scriptFileName);
 }
 
-LuaScript * LuaWrapper::AddScript(const LuaString & scriptFileName)
+std::shared_ptr<LuaScript> LuaWrapper::AddScript(const LuaString & scriptFileName)
 {
 	return this->AddScript(scriptFileName, scriptFileName);
 }
 
-LuaScript * LuaWrapper::AddScript(const LuaString & scriptName, const LuaString & scriptFileName)
+std::shared_ptr<LuaScript> LuaWrapper::AddScript(const LuaString & scriptName, const LuaString & scriptFileName)
 {
 	LuaString script = this->GetScriptFromFile(scriptFileName);
 
@@ -120,11 +117,11 @@ LuaScript * LuaWrapper::AddScript(const LuaString & scriptName, const LuaString 
 	lua_setglobal(state, scriptName.c_str());
 	
 
-	LuaScript * ls = new LuaScript(state, scriptName, scriptFileName);
+	std::shared_ptr<LuaScript> ls = std::shared_ptr<LuaScript>(new LuaScript(state, scriptName, scriptFileName));
 		
 	for (auto it = this->classes.begin(); it != this->classes.end(); it++)
 	{
-		ls->RegisterClass(it->second);
+		ls->RegisterClass(*(it->second));
 	}
 
 	/*

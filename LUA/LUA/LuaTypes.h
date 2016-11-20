@@ -27,4 +27,12 @@ typedef struct luaL_RegAttr {
 
 typedef std::function<LuaString(const LuaString & filePath)> ScriptLoaderCallback;
 
+template <typename T>
+using LuaToStringCallback = std::function<LuaString(T *)>;
+
+struct LuaClassToString
+{
+	virtual LuaString Call(void * ptr) const = 0;	
+};
+
 #endif

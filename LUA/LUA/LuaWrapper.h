@@ -10,7 +10,7 @@ struct lua_State;
 
 #include <unordered_map>
 #include <unordered_set>
-
+#include <memory>
 
 #include "./LuaMacros.h"
 #include "./LuaTypes.h"
@@ -30,12 +30,12 @@ namespace Lua
 
 		void AddClass(const LuaClass & luaClass);
 
-		LuaScript * GetScript(lua_State * state);
+		std::shared_ptr<LuaScript> GetScript(lua_State * state);
 		bool ExistScript(lua_State * state) const;
 		
 		
-		LuaScript * AddScript(const LuaString & scriptFileName);
-		LuaScript * AddScript(const LuaString & scriptName, const LuaString & scriptFileName);
+		std::shared_ptr<LuaScript> AddScript(const LuaString & scriptFileName);
+		std::shared_ptr<LuaScript> AddScript(const LuaString & scriptName, const LuaString & scriptFileName);
 
 		
 		friend class LuaScript;
@@ -53,7 +53,7 @@ namespace Lua
 
 		LuaString GetScriptFromFile(const LuaString & scriptFileName);
 
-		std::unordered_map<lua_State *, LuaScript *> luaScripts;
+		std::unordered_map<lua_State *, std::shared_ptr<LuaScript>> luaScripts;
 		//std::unordered_map<MyStringAnsi, void * > globalVariales;
 
 		std::unordered_map<LuaString, const LuaClass *> classes;

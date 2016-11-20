@@ -53,6 +53,118 @@ int HelloMethodParamReturn(int v)
 }
 
 
+struct BaseType
+{
+	virtual BaseType* Clone() const = 0;
+};
+
+template <typename DT>
+struct DerivedType : public BaseType
+{
+	template <typename U>
+	DerivedType(U &&  value)
+		: value(std::forward<U>(value))
+	{
+	}
+
+	BaseType* Clone() const { return new DerivedType<DT>(value); }
+
+	DT value; //decayed type
+};
+
+
+struct AnyType
+{
+public:
+	
+	AnyType()
+		: ptr(nullptr)
+	{
+
+	}	
+
+	AnyType(AnyType& that)
+		: ptr(that.Clone())
+	{
+
+	}
+
+	/*
+	template <typename T>
+	AnyType(T && value)
+		: ptr(new DerivedType<std::decay<T>::type>(std::forward<T>(value)))
+	{		
+	};
+	*/
+
+	~AnyType()
+	{
+		delete ptr;
+		ptr = NULL;
+	};
+	
+
+	AnyType& operator=(const AnyType& a)
+	{
+		if (ptr == a.ptr)
+		{
+			return *this;
+		}
+
+		BaseType * old_ptr = ptr;
+
+		ptr = a.Clone();
+
+		if (old_ptr)
+		{
+			delete old_ptr;
+		}
+		return *this;
+	}
+
+	template <typename T>
+	AnyType& operator=(T & a)
+	{		
+		BaseType * old_ptr = ptr;
+
+		if (old_ptr)
+		{
+			delete old_ptr;
+		}
+
+		this->ptr = new DerivedType<std::decay<T>::type>(std::forward<T>(a));
+		return *this;
+	}
+
+	
+	
+
+	template <typename T>
+	T & GetAs()
+	{				
+		auto derived = dynamic_cast<DerivedType<std::decay<T>::type> *>(ptr);
+
+		if (!derived) 
+		{
+			throw std::bad_cast();
+		}
+
+		return derived->value;
+	};
+	
+
+
+private:
+
+	BaseType* Clone() const
+	{
+		return (ptr) ? ptr->Clone() : nullptr;		
+	}
+
+	BaseType * ptr;
+
+};
+
 
 
 
@@ -68,12 +180,12 @@ template<typename T, typename ... Args>
 using get_print_type = decltype(std::declval<T>().Print0(std::declval<Args>() ...)) (T::*)(Args ...);
 
 
-Lua::LuaScript * Create(LuaString name)
+std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 {
 	//http://loadcode.blogspot.cz/2007/02/wrapping-c-classes-in-lua.html
 	//https://john.nachtimwald.com/2014/07/12/wrapping-a-c-library-in-lua/
 
-	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
+	std::shared_ptr<Lua::LuaScript> ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
 
 	//using bar_t = TypeOverload<Account, &Account::Print5, int>::type;
 
@@ -109,35 +221,25 @@ Lua::LuaScript * Create(LuaString name)
 	cb.AddMethod("Print7", CLASS_METHOD(Account, Print7));
 	cb.AddMethod("deposit", CLASS_METHOD(Account, deposit));
 	cb.AddMethod("balance", CLASS_METHOD(Account, balance));
-	/*
-	cb.ctor = [](Lua::LuaScript * script) {
-		return new Account(script->GetFnInput<double>());
-	};
-	*/
+	
 
 	cb.AddAttribute("vv", CLASS_ATTRIBUTE(Account, val));
 	cb.AddAttribute("xx", CLASS_ATTRIBUTE(Account, xx));
 	cb.AddAttribute("cc", CLASS_ATTRIBUTE(Account, cc));
 
-	/*
-	cb.toString = MyFunction<std::string, Account *>([](Account * a) -> std::string {
-		return "string...";
-	});
-	*/
-	
-	cb.toString = [](void * a) -> std::string {
-		Account * aa = (Account *)a;
 
-		std::string str = "str";
-		str += std::to_string(aa->val);
+	cb.SetToString([](Account * a) -> LuaString {
+		
+		std::string str = "to_string_";
+		str += std::to_string(a->val);
 
 		return str;
-	};
-	
+	});
+
 
 	ls->RegisterClass(cb);
 
-
+		
 
 
 	ls->RegisterFunction("Print_fce", METHOD(HelloMethod));
@@ -196,8 +298,24 @@ int main(int argc, char * argv[])
 
 
 	//RunBenchmark();
-	//return 1;
+	/*
+	Account * a = new Account(150);
+	int aa = 100;
 
+	//AnyType t1 = AnyType(a);
+	AnyType t1;
+	t1 = a;
+	//t1.CreateAnyType(a);
+	
+
+	//AnyType t2 = AnyType(aa);
+
+	Account * a1 = t1.GetAs<Account *>();
+	t1.~AnyType();
+	//int aa1 = t2.GetAs<int>();
+
+	return 1;
+	*/
 
 
 	
@@ -205,7 +323,7 @@ int main(int argc, char * argv[])
 
 
 	
-	Lua::LuaScript *ls = Create("t2.lua");
+	std::shared_ptr<Lua::LuaScript> ls = Create("t2.lua");
 	
 
 	

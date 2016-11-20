@@ -9,18 +9,44 @@ Wrapper logic
 Wrapper is writtent from scratch using C++11 without the in-depth knowledge of existing wrappers. 
 If there is a similarity with an existing solution, its purely coincidental.
 
-The main part of the wrapper consist of two classes - `LuaWrapper` and `LuaScript`.
+The main part of the wrapper consist of two classes located in the files with the same name - `LuaWrapper` and `LuaScript`.
 
 `LuaWrapper` is a singleton class. It initialize Lua virtual machine, create new scripts (`LuaScript`) and store them in a map. 
 In Lua callbacks, this is used to get `LuaScript` instances from `lua_State *`.
 
 `LuaScript` represents a single script that can be started.
 
+Description of other files:
+
+`LuaWrapperCpp.h` main file to include the wrapper.
+
+`LuaCallbacks.h` is main part of the wrapper. It contains templated meethods that are called from Lua,  methods binded
+to Lua metamethods like `__gc`, `__index`, `__newindex`, `__tostring` etc. and constructors for Lua classes.
+
+`LuaFunctionWrapper.h` is a static class wrapping Lua methods with a templated methods. This way, you can call "generic"
+`get` / `set` methods and in background, correct Lua methods are called (`lua_tounsigned`, `lua_tonumber` etc.).
+
+`LuaClassBind.h` is a helper class for binding C++ class to Lua. Its content is used to build C++ class representation that
+can be directly binded to Lua callbacks.
+
+`LuaUtils.h` is a helper class with static helper methods.
+
+`LuaTypes.h` helper typedefs
+
+`LuaMacros.h` contains helper macros to reduce size of the code. Some of these macros can be user-defined to change default behaviour.
 
 How to use it
 ------------------------------------------
 You just have to include `LuaWrapperCpp.h`. 
 There are no external dependencies, except Lua library (version 5.2 is included in the project)
+
+If you want, you may change some settings in `LuaMacros.h`
+
+| #define name      | meaning     |  default value |
+| ------------------|:-----------:|---------------:|
+| `SAFE_PTR_CHECKS` | Safe checks for pointers during retrieval of raw pointers from Lua (see Benchmarks) | 1             |
+| `LUA_STRING`      | String class used for LuaStrings. Must have `.c_str()` and `.length()` methods      | `std::string` |
+
 
 First, you have to start with `LuaWrapper` initialization, which is a singleton class:
 
@@ -85,19 +111,19 @@ And bind it to `LuaClassBind`
 	cb.AddMethod("Print5", CLASS_METHOD(TestClass, Print5));
 	
 	cb.AddAttribute("m_val", CLASS_ATTRIBUTE(TestClass, m_val));
-		
-	cb.toString = [](void * a) -> std::string {
-		TestClass * t = (TestClass *)a; //must be cast from void * to original type
+	
+	cb.SetToString([](TestClass * a) -> LuaString {		
 		return "string...";
 	});
 	
+		
 ````
 Each class must have one binded ctor via `SetDefaultCtor<...>`. This ctor name is same as the name of the "class". 
 However, you can specifiy additional ctors via `AddCtor<...>` and for each of them, unique name must be set.  
 All ctors behave like Factory pattern. In Lua, you call an ordinary method that returns a new class instance.
 
 
-`toString` is optional and contains lambda function that is called, when `__tostring` metamethod is called in Lua.
+Method `SetToString` is optional and sets lambda function that is called, when `__tostring` metamethod is called in Lua.
 `CLASS_METHOD`, `CLASS_ATTRIBUTE` and `CLASS_METHOD_OVERLOAD` are macros to simplify binding. They are defined in `LuaMacros.h`.
 
 The above binded class can be called from Lua as

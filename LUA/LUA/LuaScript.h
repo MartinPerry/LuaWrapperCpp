@@ -40,8 +40,7 @@ namespace Lua
 
 
 		void RegisterClass(const LuaClass & classBind);
-		void RegisterClass(const LuaClass * classBind);
-
+		
 
 		bool IsStackEmpty() const;
 		int GetStackSize() const;
@@ -57,15 +56,7 @@ namespace Lua
 		//=============================================================================
 
 
-		//=============================================================================
-		//===================== Get data passed from Lua callback function ================================
-		//=============================================================================
-
-		template <class T>
-		LUA_INLINE auto GetFnInput(int i) -> decltype(GetFnInputImpl(i, tag<T>{}))
-		{
-			return GetFnInputImpl(i, tag<T>{});
-		};
+		
 
 
 		//=============================================================================
@@ -73,27 +64,27 @@ namespace Lua
 		//=============================================================================
 
 		template <typename T>
-		void AddFnReturnValue(T * val);
+		void Push(T * val);
 
 		template <typename T, INTEGRAL_SIGNED(T)>
-		LUA_INLINE void AddFnReturnValue(T val)
+		LUA_INLINE void Push(T val)
 		{
 			this->returnValCount++;
 			lua_pushinteger(this->state, val);
 		};
 
 		template <typename T, INTEGRAL_UNSIGNED(T)>
-		LUA_INLINE void AddFnReturnValue(T val)
+		LUA_INLINE void Push(T val)
 		{
 			this->returnValCount++;
 			lua_pushunsigned(this->state, val);
 		};
 
-		void AddFnReturnValue(bool val);
-		void AddFnReturnValue(float val);
-		void AddFnReturnValue(double val);
-		void AddFnReturnValue(const char * val);
-		void AddFnReturnValue(const LuaString & val);
+		void Push(bool val);
+		void Push(float val);
+		void Push(double val);
+		void Push(const char * val);
+		void Push(const LuaString & val);
 
 		//=============================================================================
 		//===================== Set LUA global variable ===============================
@@ -143,52 +134,12 @@ namespace Lua
 
 
 
-		template <typename T>
-		struct tag
-		{
-			using type = T;
-		};
-
 
 		//=============================================================================
 
 		std::vector<LuaString> GetAllGlobals();
 
-
-		//=============================================================================
-		//===================== Get data passed from Lua callback function ================================
-		//=============================================================================
-
-
-		template <typename T>
-		T * GetFnInputImpl(int i, tag<T *>);
-
-		template <typename T>
-		LUA_INLINE T & GetFnInputImpl(int i, tag<T &>)
-		{
-			return *(this->GetFnInputImpl(i, LuaScript::tag<T *>{}));
-		};
-
-
-		template <typename T, INTEGRAL_SIGNED(T)>
-		LUA_INLINE T GetFnInputImpl(int i, tag<T>)
-		{
-			return static_cast<T>(lua_tointeger(this->state, i));
-		};
-
-		template <typename T, INTEGRAL_UNSIGNED(T)>
-		LUA_INLINE T GetFnInputImpl(int i, tag<T>)
-		{
-			return static_cast<T>(lua_tounsigned(this->state, i));
-		};
-
-
-		double GetFnInputImpl(int i, tag<double>);
-		float GetFnInputImpl(int i, tag<float>);
-		bool GetFnInputImpl(int i, tag<bool>);
-		LuaString GetFnInputImpl(int i, tag<LuaString>);
-
-
+		
 
 
 

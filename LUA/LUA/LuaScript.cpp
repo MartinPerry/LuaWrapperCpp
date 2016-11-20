@@ -125,18 +125,6 @@ Parameters:
 
 Register new Lua binding for class
 -------------------------------------------------------------*/
-void LuaScript::RegisterClass(const LuaClass * classBind)
-{
-	this->RegisterClass(*classBind);
-}
-
-/*-----------------------------------------------------------
-Function:	RegisterClass
-Parameters:
-	[in] classBind - binded class
-
-Register new Lua binding for class
--------------------------------------------------------------*/
 void LuaScript::RegisterClass(const LuaClass & classBind)
 {
 	std::type_index key = classBind.typeIndex;

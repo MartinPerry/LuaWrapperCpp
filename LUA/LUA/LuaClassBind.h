@@ -24,13 +24,29 @@ extern "C"
 
 namespace Lua
 {
+	
+
+	template <typename T>
+	struct LuaClassBindToString : public LuaClassToString
+	{					
+		LuaClassBindToString(LuaToStringCallback<T> f) : f(f) {};
+
+		virtual LuaString Call(void * ptr) const { return this->f(static_cast<T *>(ptr)); };
+
+		
+		LuaToStringCallback<T> f;
+	};
+
+
+
+
 	struct LuaClass
 	{
 		const std::type_index typeIndex;
 		const LuaString ctorName;
 
+		std::shared_ptr<LuaClassToString> toString;
 		
-		std::function<LuaString(void *)> toString;
 
 		std::vector<luaL_Reg> ctors;
 		std::vector<luaL_Reg> methods;
@@ -43,13 +59,15 @@ namespace Lua
 
 		LuaClass(const LuaString & ctorName, std::type_index typeIndex) :
 			typeIndex(typeIndex),
-			ctorName(ctorName)
+			ctorName(ctorName),
+			toString(nullptr)
 		{
 		}
 		
 		LuaClass(const LuaClass & c) : 
 			typeIndex(c.typeIndex),
-			ctorName(c.ctorName)
+			ctorName(c.ctorName),
+			toString(c.toString)
 		{			
 			this->ctors = c.ctors;
 			this->toString = c.toString;
@@ -63,6 +81,7 @@ namespace Lua
 			this->new_index = c.new_index;
 		}
 
+		
 		lua_CFunction create_new;
 		lua_CFunction garbage_collect;
 		lua_CFunction to_string;
@@ -82,8 +101,7 @@ namespace Lua
 			methods.push_back({ 0,0 });
 			attrs.push_back({ 0, 0 });
 			ctors.push_back({ 0,0 });
-			
-			//this->create_new = LuaCallbacks::create_new_default<T>;
+						
 			this->garbage_collect = LuaCallbacks::garbage_collect<T>;
 			this->to_string = LuaCallbacks::to_string<T>;
 			this->index = LuaCallbacks::index<T>;
@@ -154,6 +172,21 @@ namespace Lua
 			attrs.push_back({ 0,0 });
 		};
 
+		void SetToString(LuaToStringCallback<T> f)
+		{			
+			if (this->toString == nullptr)
+			{
+				this->toString = std::make_shared<LuaClassBindToString<T>>(f);
+				
+			}
+			else 
+			{				
+				std::shared_ptr<LuaClassBindToString<T>> derived =
+					std::dynamic_pointer_cast<LuaClassBindToString<T>>(this->toString);
+				derived->f = f;
+
+			}			
+		};
 
 	};
 

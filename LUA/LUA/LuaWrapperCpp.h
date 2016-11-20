@@ -7,6 +7,7 @@
 
 #include "./LuaWrapper.h"
 #include "./LuaScript.h"
+#include "./LuaFunctionWrapper.h"
 #include "./LuaClassBind.h"
 #include "./LuaCallbacks.h"
 #include "./LuaUtils.h"

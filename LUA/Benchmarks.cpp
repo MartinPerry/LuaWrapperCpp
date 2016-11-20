@@ -59,7 +59,7 @@ extern "C"
 
 void LuaWrapperCppCenchmark(const LuaString & name)
 {
-	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
+	std::shared_ptr<Lua::LuaScript> ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
 
 	Lua::LuaClassBind<Account> cb("Account");
 	cb.SetDefaultCtor<double>();
@@ -84,7 +84,7 @@ void LuaWrapperCppCenchmark(const LuaString & name)
 	cb.AddAttribute("cc", CLASS_ATTRIBUTE(Account, cc));
 #endif
 	
-
+	/*
 	cb.toString = [](void * a) -> std::string {
 		Account * aa = (Account *)a;
 
@@ -93,7 +93,7 @@ void LuaWrapperCppCenchmark(const LuaString & name)
 
 		return str;
 	};
-
+	*/
 
 	ls->RegisterClass(cb);
 
