@@ -4,6 +4,11 @@
 #include <cstdio>
 #include <cstring>
 
+extern "C"
+{
+#include "./lua_lib/lauxlib.h"
+}
+
 #include "./LuaMacros.h"
 #include "./LuaTypes.h"
 
@@ -55,6 +60,37 @@ namespace Lua
 
 			return strCopy;			
 		};
+
+		/*-----------------------------------------------------------
+		Function:	DeepCopy
+		Parameters:
+		[in] t - struct to copy
+		Returns:
+		deep copy of the struct
+
+		Create Deep copy of luaL_Reg or luaL_RegAttr
+		-------------------------------------------------------------*/
+		template <typename T>
+		static T DeepCopy(const T & t)
+		{
+			char * cpName = nullptr;
+
+			if (t.name != nullptr)
+			{
+				size_t len = strlen(t.name);
+
+				cpName = new char[len + 1];
+				my_strncpy(cpName, len + 1, t.name, len);
+				cpName[len] = 0;
+			}
+
+			T copy;
+			copy.name = cpName;
+			copy.func = t.func;
+			
+			return copy;
+		};
+		
 
 		/*-----------------------------------------------------------
 		Function:	LoadFromFile

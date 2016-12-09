@@ -1,7 +1,6 @@
 #ifndef LUA_CALLBACKS_H
 #define LUA_CALLBACKS_H
 
-
 #include <typeinfo>
 #include <typeindex>
 #include <functional>
@@ -9,6 +8,13 @@
 #include <tuple>
 #include <unordered_map>
 #include <memory>
+
+extern "C"
+{
+#include "./lua_lib/lua.h"
+#include "./lua_lib/lualib.h"
+#include "./lua_lib/lauxlib.h"
+}
 
 #include "./LuaMacros.h"
 #include "./LuaTypes.h"

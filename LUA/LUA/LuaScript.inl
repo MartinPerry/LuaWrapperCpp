@@ -86,3 +86,34 @@ LUA_INLINE void LuaScript::SetGlobalVarLight(const LuaString & varName, T * val)
 
 
 
+
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, bool val)
+{
+	lua_pushboolean(this->state, val);
+	lua_setglobal(this->state, varName.c_str());
+};
+
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, float val)
+{
+	lua_pushnumber(this->state, val);
+	lua_setglobal(this->state, varName.c_str());
+};
+
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, double val)
+{
+	lua_pushnumber(this->state, val);
+	lua_setglobal(this->state, varName.c_str());
+};
+
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, const char * val)
+{
+	lua_pushstring(this->state, val);
+	lua_setglobal(this->state, varName.c_str());
+};
+
+LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, const LuaString & val)
+{
+	lua_pushstring(this->state, val.c_str());
+	lua_setglobal(this->state, varName.c_str());
+};
+

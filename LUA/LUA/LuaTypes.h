@@ -7,11 +7,17 @@
 
 struct lua_State;
 
+namespace Lua
+{
+	class LuaScript;
+}
 //=============================================================================================
 // Other structures
-//#include "../Strings/MyStringAnsi.h"
+
 #include <string>
+
 #include <functional>
+#include <memory>
 
 
 typedef LUA_STRING LuaString;
@@ -26,6 +32,7 @@ typedef struct luaL_RegAttr {
 } luaL_RegAttr;
 
 typedef std::function<LuaString(const LuaString & filePath)> ScriptLoaderCallback;
+typedef std::function<void(std::shared_ptr<Lua::LuaScript> script )> RegisterCallback;
 
 template <typename T>
 using LuaToStringCallback = std::function<LuaString(T *)>;

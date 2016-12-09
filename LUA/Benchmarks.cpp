@@ -95,7 +95,7 @@ void LuaWrapperCppCenchmark(const LuaString & name)
 	};
 	*/
 
-	ls->RegisterClass(cb);
+	ls->RegisterLuaClass(cb);
 
 
 	srand(time(NULL));

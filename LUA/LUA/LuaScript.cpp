@@ -2,9 +2,9 @@
 
 extern "C"
 {
-	#include "./lua_lib/lua.h"
-	#include "./lua_lib/lualib.h"
-	#include "./lua_lib/lauxlib.h"
+#include "./lua_lib/lua.h"
+#include "./lua_lib/lualib.h"
+#include "./lua_lib/lauxlib.h"
 }
 
 
@@ -106,26 +106,26 @@ int LuaScript::GetFnReturnValueCount() const
 }
 
 /*-----------------------------------------------------------
-Function:	RegisterFunction
+Function:	RegisterLuaFunction
 Parameters:
 	[in] luaName - name of function in LUA
 	[in] fn - pointer to C function to be registered
 	
 Register new C function to LUA
 -------------------------------------------------------------*/
-void LuaScript::RegisterFunction(const LuaString & luaFName, lua_CFunction fn)
+void LuaScript::RegisterLuaFunction(const LuaString & luaFName, lua_CFunction fn)
 {	
 	lua_register( this->state, luaFName.c_str(), fn );
 }
 
 /*-----------------------------------------------------------
-Function:	RegisterClass
+Function:	RegisterLuaClass
 Parameters:
 	[in] classBind - binded class
 
 Register new Lua binding for class
 -------------------------------------------------------------*/
-void LuaScript::RegisterClass(const LuaClass & classBind)
+void LuaScript::RegisterLuaClass(const LuaClass & classBind)
 {
 	std::type_index key = classBind.typeIndex;
 
@@ -162,9 +162,13 @@ void LuaScript::RegisterClass(const LuaClass & classBind)
 	lua_setfield(L, -1, "__newindex");
 
 
-	//Default ctor - named same as "class"
-	lua_pushcclosure(L, classBind.create_new, 0);
-	lua_setglobal(L, classBind.ctorName.c_str()); // this is how function will be named in Lua
+	//ctor is not mandatory
+	if (classBind.create_new != nullptr)
+	{
+		//Default ctor - named same as "class"
+		lua_pushcclosure(L, classBind.create_new, 0);
+		lua_setglobal(L, classBind.ctorName.c_str()); // this is how function will be named in Lua
+	}
 
 	//other ctors named as specified by user
 	for (size_t i = 0; i < classBind.ctors.size() - 1; i++)
@@ -347,48 +351,6 @@ void LuaScript::PrintStack(const LuaString & id)
 
 
 
-
-
-
-
-
-
-
-//=============================================================================
-//===================== Set LUA global variable ===============================
-//=============================================================================
-
-
-
-LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, bool val)
-{
-	lua_pushboolean(this->state, val);
-	lua_setglobal(this->state, varName.c_str());
-};
-
-LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, float val)
-{
-	lua_pushnumber(this->state, val);
-	lua_setglobal(this->state, varName.c_str());
-};
-
-LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, double val)
-{
-	lua_pushnumber(this->state, val);
-	lua_setglobal(this->state, varName.c_str());
-};
-
-LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, const char * val)
-{
-	lua_pushstring(this->state, val);
-	lua_setglobal(this->state, varName.c_str());
-};
-
-LUA_INLINE void LuaScript::SetGlobalVar(const LuaString & varName, const LuaString & val)
-{
-	lua_pushstring(this->state, val.c_str());
-	lua_setglobal(this->state, varName.c_str());
-};
 
 
 

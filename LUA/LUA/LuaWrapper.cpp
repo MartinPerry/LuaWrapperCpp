@@ -10,6 +10,7 @@ using namespace Lua;
 LuaWrapper * LuaWrapper::instance = NULL;
 
 LuaWrapper::LuaWrapper()
+	: scriptLoaderCallback(nullptr), regCallback(nullptr)
 {
 }
 
@@ -54,6 +55,10 @@ LuaWrapper * LuaWrapper::GetInstance()
 	return instance;
 }
 
+void LuaWrapper::SetRegisterCallback(RegisterCallback regCallback)
+{
+	this->regCallback = regCallback;
+}
 
 bool LuaWrapper::ExistScript(lua_State * state) const
 {
@@ -121,16 +126,14 @@ std::shared_ptr<LuaScript> LuaWrapper::AddScript(const LuaString & scriptName, c
 		
 	for (auto it = this->classes.begin(); it != this->classes.end(); it++)
 	{
-		ls->RegisterClass(*(it->second));
+		ls->RegisterLuaClass(*(it->second));
 	}
 
-	/*
-	std::unordered_map<MyStringAnsi, void * >::const_iterator it;
-	for (it = this->globalVariales.begin(); it != this->globalVariales.end(); it++)
+	if (this->regCallback != nullptr)
 	{
-		ls->SetGlobalVar(it->first, it->second);
+		this->regCallback(ls);
 	}
-	*/
+	
 
 	this->luaScripts.insert(std::make_pair(state, ls));
 

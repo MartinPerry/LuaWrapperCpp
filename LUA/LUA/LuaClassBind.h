@@ -60,7 +60,11 @@ namespace Lua
 		LuaClass(const LuaString & ctorName, std::type_index typeIndex) :
 			typeIndex(typeIndex),
 			ctorName(ctorName),
-			toString(nullptr)
+			create_new(nullptr),
+			garbage_collect(nullptr),
+			toString(nullptr),
+			index(nullptr),
+			new_index(nullptr)
 		{
 		}
 		
@@ -69,16 +73,36 @@ namespace Lua
 			ctorName(c.ctorName),
 			toString(c.toString)
 		{			
-			this->ctors = c.ctors;
+			
 			this->toString = c.toString;
-			this->methods = c.methods;
-			this->attrs = c.attrs;
+
+			//this->ctors = c.ctors;
+			//this->methods = c.methods;
+			//this->attrs = c.attrs;
+
+
+			for (size_t i = 0; i < c.ctors.size(); i++)
+			{
+				this->ctors.push_back(Lua::LuaUtils::DeepCopy(c.ctors[i]));
+			}
+			
+			for (size_t i = 0; i < c.methods.size(); i++)
+			{
+				this->methods.push_back(Lua::LuaUtils::DeepCopy(c.methods[i]));
+			}
+			
+			for (size_t i = 0; i < c.attrs.size(); i++)
+			{
+				this->attrs.push_back(Lua::LuaUtils::DeepCopy(c.attrs[i]));
+			}
+		
+
 
 			this->create_new = c.create_new;
 			this->garbage_collect = c.garbage_collect;
 			this->to_string = c.to_string;
 			this->index = c.index;
-			this->new_index = c.new_index;
+			this->new_index = c.new_index;			
 		}
 
 		

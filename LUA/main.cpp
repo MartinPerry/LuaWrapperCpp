@@ -218,7 +218,7 @@ std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 		return str;
 	});
 
-	ls->RegisterClass(cbv2);
+	ls->RegisterLuaClass(cbv2);
 
 	Lua::LuaClassBind<Account> cb("Account");
 	cb.SetDefaultCtor<double>();
@@ -257,13 +257,13 @@ std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 	});
 
 
-	ls->RegisterClass(cb);
+	ls->RegisterLuaClass(cb);
 
 		
 
 
-	ls->RegisterFunction("Print_fce", METHOD(HelloMethod));
-	ls->RegisterFunction("Print_fce2", METHOD(HelloMethodParam));
+	ls->RegisterLuaFunction("Print_fce", METHOD(HelloMethod));
+	ls->RegisterLuaFunction("Print_fce2", METHOD(HelloMethodParam));
 
 
 	

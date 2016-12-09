@@ -28,6 +28,8 @@ namespace Lua
 		static LuaWrapper * GetInstance();
 
 
+		void SetRegisterCallback(RegisterCallback regCallback);
+
 		void AddClass(const LuaClass & luaClass);
 
 		std::shared_ptr<LuaScript> GetScript(lua_State * state);
@@ -42,6 +44,7 @@ namespace Lua
 
 	protected:
 
+		RegisterCallback regCallback;
 		ScriptLoaderCallback scriptLoaderCallback;
 
 		LuaWrapper();

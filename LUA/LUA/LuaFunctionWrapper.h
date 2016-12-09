@@ -35,7 +35,8 @@ namespace Lua
 		public:
 
 			template <class T>
-			static LUA_INLINE auto GetFnInput(lua_State * L, int i) -> decltype(GetFnInputImpl(L, i, tag<T>{}))
+			static LUA_INLINE auto GetFnInput(lua_State * L, int i) 
+				-> decltype(GetFnInputImpl(L, i, tag<T>{}))
 			{
 				return LuaFunctionsWrapper::GetFnInputImpl(L, i, tag<T>{});
 			};
@@ -45,6 +46,7 @@ namespace Lua
 			
 		
 		private:
+
 			template <typename T>
 			struct tag
 			{

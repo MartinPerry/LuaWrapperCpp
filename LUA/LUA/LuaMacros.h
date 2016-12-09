@@ -10,6 +10,7 @@
 
 //String class used in Lua
 #define LUA_STRING std::string
+//#define LUA_STRING MyStringAnsi
 
 //inline call
 #define LUA_INLINE __forceinline 
@@ -35,8 +36,8 @@
 #define METHOD(MethodName) \
 	LuaCallbacks::function<decltype(&MethodName), &MethodName>
 
-#define LUA_SAFE_DELETE(a) {if (a != NULL) { delete a; a = NULL; }};
-#define LUA_SAFE_DELETE_ARRAY(a) {if (a != NULL) { delete[] a; a = NULL; }};
+#define LUA_SAFE_DELETE(a) {if (a != nullptr) { delete a; a = nullptr; }};
+#define LUA_SAFE_DELETE_ARRAY(a) {if (a != nullptr) { delete[] a; a = nullptr; }};
 //=============================================================================================
 // Debug logging
 

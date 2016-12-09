@@ -62,6 +62,16 @@ Function must return loaded string with a script.
 You can also pass `nullptr`, in that case default loading `Lua::LuaUtils::LoadFromFile(filePath)` will be used.
 
 
+In some cases, you may want to add some global variables or register classes / functions for all scripts, that are loaded
+with the wrapper.
+You can do this using `SetRegisterCallback` that is called after the script has been created via `AddScript`.
+
+````c++
+Lua::LuaWrapper::GetInstance()->SetRegisterCallback(
+	[&](std::shared_ptr<Lua::LuaScript> script) -> void {
+		script->SetGlobalVarClass<Account>("global_ucet", someAccount);
+	});	
+````			
 
 
 Binding C++ class to wrapper
@@ -72,10 +82,17 @@ Each class is wrapped with `LuaClassBind`.
 
 We have simple C++ test class:
 ````c++
+	struct TestStruct 
+	{
+		float m_x;
+		float m_y;
+	};
+
 	class TestClass
     {
     public:
         double m_val = 148;
+		TestStruct m_tc;
 		
 		TestClass(double val) { m_val = val; }
 		TestClass(double v1, double v2) { m_val = v1 * v2; }
@@ -98,9 +115,21 @@ We have simple C++ test class:
 
 And bind it to `LuaClassBind`
 ````c++
+
+	Lua::LuaClassBind<TestStruct> sb("TestStruct");	
+	sb.SetDefaultCtor<>();
+	
+	sb.AddAttribute("m_x", CLASS_ATTRIBUTE(TestClass, m_x));
+	sb.AddAttribute("m_y", CLASS_ATTRIBUTE(TestClass, m_y));
+	
+	sb.SetToString([](TestStruct * a) -> LuaString {		
+		return "TestStruct...";
+	});
+	
 	Lua::LuaClassBind<TestClass> cb("TestClass");	
 	cb.SetDefaultCtor<double>();
 	cb.AddCtor<double, double>("TestClass_ctor2");
+	
 	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(TestClass, Print0));
 	cb.AddMethod("Print0_args", CLASS_METHOD_OVERLOAD(TestClass, Print0, double, double));
 			
@@ -111,9 +140,10 @@ And bind it to `LuaClassBind`
 	cb.AddMethod("Print5", CLASS_METHOD(TestClass, Print5));
 	
 	cb.AddAttribute("m_val", CLASS_ATTRIBUTE(TestClass, m_val));
+	cb.AddAttribute("m_tc", CLASS_ATTRIBUTE(TestClass, m_tc));
 	
 	cb.SetToString([](TestClass * a) -> LuaString {		
-		return "string...";
+		return "TestClass...";
 	});
 	
 		
@@ -135,6 +165,15 @@ The above binded class can be called from Lua as
 	t:Print3(t)
 	t:Print4(t)
 	t:Print5()
+	
+	
+	v = TestStruct();
+	v.m_x = 15.0
+	print(v)
+	
+	t.m_tc = v
+	print(t.m_tc)
+
 	
 	t.m_val = 10
 	print(t.m_val)

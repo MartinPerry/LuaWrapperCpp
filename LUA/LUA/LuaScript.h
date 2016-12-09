@@ -10,9 +10,9 @@
 
 extern "C"
 {
-	#include "./lua_lib/lua.h"
-	#include "./lua_lib/lualib.h"
-	#include "./lua_lib/lauxlib.h"
+#include "./lua_lib/lua.h"
+#include "./lua_lib/lualib.h"
+#include "./lua_lib/lauxlib.h"
 }
 
 #include "./LuaWrapper.h"
@@ -43,10 +43,10 @@ namespace Lua
 		lua_State * GetState();
 
 		
-		void RegisterFunction(const LuaString & luaFName, lua_CFunction fn);
+		void RegisterLuaFunction(const LuaString & luaFName, lua_CFunction fn);
 
 
-		void RegisterClass(const LuaClass & classBind);
+		void RegisterLuaClass(const LuaClass & classBind);
 		
 
 		bool IsStackEmpty() const;
