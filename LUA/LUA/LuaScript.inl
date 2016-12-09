@@ -2,12 +2,6 @@
 	#include "LuaScript.h"
 #endif
 
-extern "C"
-{
-#include "./lua_lib/lua.h"
-#include "./lua_lib/lualib.h"
-#include "./lua_lib/lauxlib.h"
-}
 
 
 
@@ -29,6 +23,7 @@ LUA_INLINE void LuaScript::Push(T * val)
 		lua_pushlightuserdata(this->state, static_cast<void *>(val));
 	}
 };
+
 
 LUA_INLINE void LuaScript::Push(bool val)
 {

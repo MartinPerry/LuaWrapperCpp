@@ -60,13 +60,13 @@ extern "C"
 void LuaWrapperCppCenchmark(const LuaString & name)
 {
 	std::shared_ptr<Lua::LuaScript> ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
+	
 
 	Lua::LuaClassBind<Account> cb("Account");
 	cb.SetDefaultCtor<double>();
-	cb.AddCtor<double, double>("Account_2");
-	
-	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(Account, Print0));
-	cb.AddMethod("Print0L", CLASS_METHOD_OVERLOAD(Account, Print0, double, double));	
+	cb.AddCtor<double, double>("Account_2");	
+	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(BaseAccount, Print0));
+	cb.AddMethod("Print0L", CLASS_METHOD_OVERLOAD(BaseAccount, Print0, double, double));	
 	cb.AddMethod("Print1", CLASS_METHOD(Account, Print1));
 	cb.AddMethod("Print2", CLASS_METHOD(Account, Print2));
 	cb.AddMethod("Print3", CLASS_METHOD(Account, Print3));
@@ -79,7 +79,7 @@ void LuaWrapperCppCenchmark(const LuaString & name)
 	cb.AddMethod("balance", CLASS_METHOD(Account, balance));
 	
 #ifdef WITH_ATTRIBUTES
-	cb.AddAttribute("vv", CLASS_ATTRIBUTE(Account, val));
+	cb.AddAttribute("vv", CLASS_ATTRIBUTE(BaseAccount, val));
 	cb.AddAttribute("xx", CLASS_ATTRIBUTE(Account, xx));
 	cb.AddAttribute("cc", CLASS_ATTRIBUTE(Account, cc));
 #endif

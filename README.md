@@ -18,20 +18,20 @@ In Lua callbacks, this is used to get `LuaScript` instances from `lua_State *`.
 
 Description of other files:
 
-`LuaWrapperCpp.h` main file to include the wrapper.
+`LuaWrapperCpp.h` is the main file to include the wrapper.
 
-`LuaCallbacks.h` is main part of the wrapper. It contains templated meethods that are called from Lua,  methods binded
+`LuaCallbacks.h` contains main part of the wrapper. It contains templated meethods that are called from Lua,  methods binded
 to Lua metamethods like `__gc`, `__index`, `__newindex`, `__tostring` etc. and constructors for Lua classes.
 
-`LuaFunctionWrapper.h` is a static class wrapping Lua methods with a templated methods. This way, you can call "generic"
+`LuaFunctionWrapper.h` contains a static class wrapping Lua methods with a templated methods. This way, you can call "generic"
 `get` / `set` methods and in background, correct Lua methods are called (`lua_tounsigned`, `lua_tonumber` etc.).
 
-`LuaClassBind.h` is a helper class for binding C++ class to Lua. Its content is used to build C++ class representation that
+`LuaClassBind.h` contains a helper class for binding C++ class to Lua. Its content is used to build C++ class representation that
 can be directly binded to Lua callbacks.
 
-`LuaUtils.h` is a helper class with static helper methods.
+`LuaUtils.h` contains a helper class with static helper methods.
 
-`LuaTypes.h` helper typedefs
+`LuaTypes.h` contains helper typedefs
 
 `LuaMacros.h` contains helper macros to reduce size of the code. Some of these macros can be user-defined to change default behaviour.
 

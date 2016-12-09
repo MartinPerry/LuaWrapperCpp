@@ -4,6 +4,15 @@
 
 #include "./Lua/LuaTypes.h"
 
+struct Vector2 
+{
+	float x = 0;
+	float y;
+
+	Vector2() : x(0), y(1) {};
+
+};
+
 class Account2 {
 public:
 	Account2() {}
@@ -17,10 +26,37 @@ private:
 	double m2;
 };
 
-class Account {
-public:
 
-	double val = 148;
+class BaseAccount
+{
+	public:
+
+		double val = 148;
+
+		void Print0()
+		{
+			printf("STR0: EMPTY\n");
+			val = 77;
+		}
+
+		void Print0(double vl, double o)
+		{
+			printf("STR0: overload %f %f\n", vl, o);
+		}
+
+
+		void Print1(const short& xx)
+		{
+			printf("STR1: EMPTY %i\n", xx);
+		}
+
+};
+
+class Account : public BaseAccount {
+public:
+	
+	Vector2 v2;
+
 	LuaString xx = "ahoj aatr";
 	Account2 * cc = new Account2(1);
 	//Account * cc = new Account(1);
@@ -44,21 +80,13 @@ public:
 		printf("CONST %i\n", i);
 	}
 
-	void Print0()
+	
+
+	void Print0(double * arr)
 	{
-		printf("STR0: EMPTY\n");
-		val = 77;
+		printf("STR0: overload %f %f\n", 4.0, 5.0);
 	}
 
-	void Print0(double vl, double o) const
-	{
-		printf("STR0: overload %f %f\n", vl, o);		
-	}
-
-	void Print1(const short& xx)
-	{
-		printf("STR1: EMPTY %i\n", xx);
-	}
 
 	void Print2(LuaString tt, int ii, int jj)
 	{

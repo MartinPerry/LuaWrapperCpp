@@ -201,12 +201,31 @@ std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 
 	//ls->RegisterFunction("Print_fce", NULL);
 	
+
+
+	Lua::LuaClassBind<Vector2> cbv2("Vector2");
+	cbv2.SetDefaultCtor<>();
+	cbv2.AddAttribute("x", CLASS_ATTRIBUTE(Vector2, x));
+	cbv2.AddAttribute("y", CLASS_ATTRIBUTE(Vector2, y));
+	cbv2.SetToString([](Vector2 * a) -> LuaString {
+
+		std::string str = "Vector2[";
+		str += std::to_string(a->x);
+		str += ", ";
+		str += std::to_string(a->y);
+		str += "]";
+
+		return str;
+	});
+
+	ls->RegisterClass(cbv2);
+
 	Lua::LuaClassBind<Account> cb("Account");
 	cb.SetDefaultCtor<double>();
 	cb.AddCtor<double, double>("Account_2");
 	//cb.AddMethod("Print0", LuaCallbacks::function<decltype(std::declval<Account>().Print0()) (Account::*)(), &Account::Print0>);
-	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(Account, Print0));
-	cb.AddMethod("Print0L", CLASS_METHOD_OVERLOAD(Account, Print0, double, double));
+	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(BaseAccount, Print0));
+	cb.AddMethod("Print0L", CLASS_METHOD_OVERLOAD(BaseAccount, Print0, double, double));
 	//cb.AddMethod("Print0L", LuaCallbacks::function<TMP(Account, Print0, double, double), &Account::Print0>);
 	
 	//cb.AddMethod("Print0L", LuaCallbacks::function<TypeOverload<Account, &Account::Print0, double, double>::type, &Account::Print0>);
@@ -223,9 +242,10 @@ std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 	cb.AddMethod("balance", CLASS_METHOD(Account, balance));
 	
 
-	cb.AddAttribute("vv", CLASS_ATTRIBUTE(Account, val));
+	cb.AddAttribute("vv", CLASS_ATTRIBUTE(BaseAccount, val));
 	cb.AddAttribute("xx", CLASS_ATTRIBUTE(Account, xx));
 	cb.AddAttribute("cc", CLASS_ATTRIBUTE(Account, cc));
+	cb.AddAttribute("v2", CLASS_ATTRIBUTE(Account, v2));
 
 
 	cb.SetToString([](Account * a) -> LuaString {
@@ -282,6 +302,8 @@ void doSomething2()
 
 int main(int argc, char * argv[])
 {
+
+
 	/*
 	MyClass cl;
 	cl.i = 7;

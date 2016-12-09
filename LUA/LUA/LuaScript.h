@@ -8,6 +8,13 @@
 
 #include <vector>
 
+extern "C"
+{
+	#include "./lua_lib/lua.h"
+	#include "./lua_lib/lualib.h"
+	#include "./lua_lib/lauxlib.h"
+}
+
 #include "./LuaWrapper.h"
 #include "./LuaClassBind.h"
 
@@ -56,7 +63,6 @@ namespace Lua
 		//=============================================================================
 
 
-		
 
 
 		//=============================================================================
@@ -65,6 +71,24 @@ namespace Lua
 
 		template <typename T>
 		void Push(T * val);
+
+
+		template <typename T,
+			typename std::enable_if <
+			std::is_integral<T>::value == false &&
+			std::is_same<T, float>::value == false &&
+			std::is_same<T, double>::value == false &&
+			std::is_same<T, const char *>::value == false &&
+			std::is_same<T, const LuaString &>::value == false
+			>::type* = nullptr
+		>			
+		void Push(T val)
+		{
+			this->returnValCount++;			
+			T * v = reinterpret_cast<T*>(::operator new(sizeof(T)));
+			memcpy(v, &val, sizeof(T));
+			LuaCallbacks::SetNewUserDataClass<T>(this->state, v);
+		}
 
 		template <typename T, INTEGRAL_SIGNED(T)>
 		LUA_INLINE void Push(T val)

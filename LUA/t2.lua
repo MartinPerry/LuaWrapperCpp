@@ -96,9 +96,18 @@ end
 --print_r(fallback_example)
 --print_r(getmetatable(fallback_example))
 
+v = Vector2();
+v.x = 15
+
+print(v)
 
 a = Account_2(150, 0)
 
+print(a.v2)
+a.v2 = v
+print(a.v2)
+
+print(a.vv)
 print(a)
 os.exit()
 

@@ -541,7 +541,7 @@ struct LuaCallbacks
 		{			
 			T* a = (*(T **)(lua_touserdata(L, 1)));
 			delete a;
-			a = NULL;
+			a = nullptr;
 		}
 		return 0;
 	}

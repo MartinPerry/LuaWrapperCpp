@@ -61,7 +61,24 @@ namespace Lua
 
 
 			template <typename T>
-			static LUA_INLINE T * GetFnInputImpl(lua_State * L, int i, tag<T *>);
+			static LUA_INLINE T * GetFnInputImpl(lua_State * L, int i, tag<T *>)
+			{
+				int argType = lua_type(L, i);
+
+				if (argType == LUA_TUSERDATA)
+				{
+					T * a = (*(T **)(lua_touserdata(L, i)));
+					return a;
+				}
+				else if (argType == LUA_TLIGHTUSERDATA)
+				{
+					return static_cast<T *>(lua_touserdata(L, i));
+				}
+				else
+				{
+					return NULL;
+				}
+			};
 
 			template <typename T>
 			static LUA_INLINE T & GetFnInputImpl(lua_State * L, int i, tag<T &>)
@@ -69,6 +86,19 @@ namespace Lua
 				return *(LuaFunctionsWrapper::GetFnInputImpl(L, i, tag<T *>{}));
 			};
 
+
+			template <typename T, 
+				typename std::enable_if <
+					std::is_integral<T>::value == false &&
+					std::is_same<T, float>::value == false &&
+					std::is_same<T, double>::value == false &&					
+					std::is_same<T, LuaString>::value == false
+				>::type* = nullptr
+			>
+			static LUA_INLINE T GetFnInputImpl(lua_State * L, int i, tag<T>)
+			{
+				return *(LuaFunctionsWrapper::GetFnInputImpl(L, i, tag<T *>{}));												
+			};
 
 			template <typename T, INTEGRAL_SIGNED(T)>
 			static LUA_INLINE T GetFnInputImpl(lua_State * L, int i, tag<T>)
@@ -83,14 +113,30 @@ namespace Lua
 			};
 
 
-			static double GetFnInputImpl(lua_State * L, int i, tag<double>);
-			static float GetFnInputImpl(lua_State * L, int i, tag<float>);
-			static bool GetFnInputImpl(lua_State * L, int i, tag<bool>);
-			static LuaString GetFnInputImpl(lua_State * L, int i, tag<LuaString>);
+			static LUA_INLINE double GetFnInputImpl(lua_State * L, int i, tag<double>)
+			{
+				return lua_tonumber(L, i);
+			};
+
+			static LUA_INLINE float GetFnInputImpl(lua_State * L, int i, tag<float>)
+			{
+				return static_cast<float>(lua_tonumber(L, i));
+			};
+
+			static LUA_INLINE bool GetFnInputImpl(lua_State * L, int i, tag<bool>)
+			{
+				return (lua_toboolean(L, i) == 1);
+			};
+
+			static LUA_INLINE LuaString GetFnInputImpl(lua_State * L, int i, tag<LuaString>)
+			{
+				const char * str = lua_tostring(L, i);
+				return str;
+			};
 
 	};
 
-	#include "LuaFunctionWrapper.inl"
+	
 }
 
 #endif
