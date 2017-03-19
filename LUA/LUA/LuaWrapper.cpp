@@ -10,7 +10,7 @@ using namespace Lua;
 LuaWrapper * LuaWrapper::instance = NULL;
 
 LuaWrapper::LuaWrapper()
-	: scriptLoaderCallback(nullptr), regCallback(nullptr)
+	: scriptLoaderCallback(nullptr)
 {
 }
 
@@ -55,9 +55,9 @@ LuaWrapper * LuaWrapper::GetInstance()
 	return instance;
 }
 
-void LuaWrapper::SetRegisterCallback(RegisterCallback regCallback)
+void LuaWrapper::AddRegisterCallback(RegisterCallback regCallback)
 {
-	this->regCallback = regCallback;
+	this->regCallbacks.push_back(regCallback);
 }
 
 bool LuaWrapper::ExistScript(lua_State * state) const
@@ -129,9 +129,9 @@ std::shared_ptr<LuaScript> LuaWrapper::AddScript(const LuaString & scriptName, c
 		ls->RegisterLuaClass(*(it->second));
 	}
 
-	if (this->regCallback != nullptr)
+	for (size_t i = 0; i < this->regCallbacks.size(); i++)
 	{
-		this->regCallback(ls);
+		this->regCallbacks[i](ls);
 	}
 	
 

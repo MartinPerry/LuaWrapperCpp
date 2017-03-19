@@ -64,12 +64,13 @@ You can also pass `nullptr`, in that case default loading `Lua::LuaUtils::LoadFr
 
 In some cases, you may want to add some global variables or register classes / functions for all scripts, that are loaded
 with the wrapper.
-You can do this using `SetRegisterCallback` that is called after the script has been created via `AddScript`.
+You can do this using `AddRegisterCallback`. This will add callback that is called after the script has been created via `AddScript`. 
+You can have more of these registered from different places of your code.
 
 ````c++
-Lua::LuaWrapper::GetInstance()->SetRegisterCallback(
+Lua::LuaWrapper::GetInstance()->AddRegisterCallback(
 	[&](std::shared_ptr<Lua::LuaScript> script) -> void {
-		script->SetGlobalVarClass<Account>("global_ucet", someAccount);
+		script->SetGlobalVarClass<Account>("global_account", someAccount);
 	});	
 ````			
 
@@ -84,8 +85,8 @@ We have simple C++ test class:
 ````c++
 	struct TestStruct 
 	{
-		float m_x;
-		float m_y;
+		float m_x = 0.0f;
+		float m_y = 0.0f;
 	};
 
 	class TestClass

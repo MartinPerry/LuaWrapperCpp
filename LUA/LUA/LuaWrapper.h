@@ -28,7 +28,7 @@ namespace Lua
 		static LuaWrapper * GetInstance();
 
 
-		void SetRegisterCallback(RegisterCallback regCallback);
+		void AddRegisterCallback(RegisterCallback regCallback);
 
 		void AddClass(const LuaClass & luaClass);
 
@@ -44,7 +44,7 @@ namespace Lua
 
 	protected:
 
-		RegisterCallback regCallback;
+		std::vector<RegisterCallback> regCallbacks;
 		ScriptLoaderCallback scriptLoaderCallback;
 
 		LuaWrapper();
