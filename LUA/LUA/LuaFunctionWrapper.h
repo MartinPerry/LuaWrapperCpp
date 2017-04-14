@@ -15,6 +15,7 @@ extern "C"
 
 #include <vector>
 
+
 #include "./LuaWrapper.h"
 #include "./LuaClassBind.h"
 
@@ -42,6 +43,12 @@ namespace Lua
 			};
 
 
+			
+			template <class T>
+			static LUA_INLINE void Push(lua_State * L, T v)				
+			{
+				LuaFunctionsWrapper::PushImpl(L, v, tag<T>{});
+			};
 			
 			
 		
@@ -135,6 +142,95 @@ namespace Lua
 				const char * str = lua_tostring(L, i);
 				return str;
 			};
+
+
+			//========================================================================
+			// Push to Lua
+			//========================================================================
+
+			
+			template <typename T>
+			static LUA_INLINE void PushImpl(lua_State * L, T * val, tag<T *>)
+			{				
+				lua_pushlightuserdata(L, val);
+
+				
+				//int argType = lua_type(L, i);
+
+				//if (argType == LUA_TUSERDATA)
+				//{
+				//	T * a = (*(T **)(lua_touserdata(L, i)));
+				//	return a;
+				//}
+				//else if (argType == LUA_TLIGHTUSERDATA)
+				//{
+				//	return static_cast<T *>(lua_touserdata(L, i));
+				//}				
+				
+			};
+
+			template <typename T>
+			static LUA_INLINE void PushImpl(lua_State * L, T & val, tag<T &>)
+			{
+				LuaFunctionsWrapper::PushImpl(L, &val, tag<T *>{});
+			};
+
+
+			template <typename T,
+				typename std::enable_if <
+				std::is_integral<T>::value == false &&
+				std::is_same<T, float>::value == false &&
+				std::is_same<T, double>::value == false &&
+				std::is_same<T, const char *>::value == false &&
+				std::is_same<T, const LuaString &>::value == false
+				>::type* = nullptr
+			>
+				static LUA_INLINE void PushImpl(lua_State * L, T val, tag<T>)
+			{
+				T * v = reinterpret_cast<T*>(::operator new(sizeof(T)));
+				memcpy(v, &val, sizeof(T));
+				LuaCallbacks::SetNewUserDataClass<T>(L, v);
+			};
+
+			template <typename T, INTEGRAL_SIGNED(T)>
+			static LUA_INLINE void PushImpl(lua_State * L, T val, tag<T>)
+			{				
+				lua_pushinteger(L, val);
+			};
+
+			template <typename T, INTEGRAL_UNSIGNED(T)>
+			static LUA_INLINE void PushImpl(lua_State * L, T val, tag<T>)
+			{			
+				lua_pushunsigned(L, val);
+			};
+
+
+			static LUA_INLINE void PushImpl(lua_State * L, double val, tag<double>)
+			{
+				lua_pushnumber(L, val);
+			};
+
+			static LUA_INLINE void PushImpl(lua_State * L, float val, tag<float>)
+			{
+				lua_pushnumber(L, val);
+			};
+
+			static LUA_INLINE void PushImpl(lua_State * L, bool val, tag<bool>)
+			{
+				lua_pushboolean(L, val);
+			};
+
+			static LUA_INLINE void PushImpl(lua_State * L, const LuaString & val, tag<const LuaString &>)
+			{
+				lua_pushstring(L, val.c_str());
+			};
+
+			static LUA_INLINE void PushImpl(lua_State * L, const char * val, tag<const char *>)
+			{
+				lua_pushstring(L, val);
+			};
+			
+			
 
 	};
 

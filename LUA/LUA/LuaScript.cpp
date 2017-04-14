@@ -22,11 +22,11 @@ using namespace Lua;
 //http://stackoverflow.com/questions/15396067/lua-newbie-c-lua-how-to-pass-a-struct-buffer-to-lua-from-c
 
 
-LuaScript::LuaScript(lua_State * state, const LuaString & scriptName, const LuaString & scriptFileName)
+LuaScript::LuaScript(lua_State * state, const LuaString & scriptName)
 {
 	this->state = state;
 	this->scriptName = scriptName;
-	this->scriptFileName = scriptFileName;
+	
 
 	luaL_openlibs( this->state );
 
@@ -262,26 +262,46 @@ Run script
 - returnValCount = 0 
 -------------------------------------------------------------*/
 void LuaScript::Run()
-{	
+{
+	
 	this->returnValCount = 0;
 	
 	//http://stackoverflow.com/questions/6434610/how-can-i-know-return-value-count-of-a-lua-function-from-c
 	//http://stackoverflow.com/questions/16691486/how-to-decide-using-lua-call-or-lua-pcall
 	//http://stackoverflow.com/questions/20938099/optimizing-lua-for-cyclic-execution
 
-	int status = 0;
+	
+	lua_pop(this->state, 1);	
+	lua_getglobal(this->state, this->scriptName.c_str());
+	
 
-	lua_getglobal(this->state, "main");
+	if (lua_pcall(this->state, 0, LUA_MULTRET, 0) != 0)
+	{
+		LUA_LOG_ERROR("Failed to run LUA script %s : %s", this->scriptName.c_str(),
+			lua_tostring(this->state, -1));
+
+	}
+
+	this->runCount++;
+	
+	/*
+	lua_getglobal(this->state, entryPointName.c_str());
+	this->PrintStack();
 	if(lua_isfunction(this->state, -1) == false)
     {	
-		lua_pop(this->state, 1);
-		lua_getglobal(this->state, this->scriptName.c_str());
+		//function not found - run entire script
 
+		
+		lua_pop(this->state, 1);
+		this->PrintStack();
+		lua_getglobal(this->state, this->scriptName.c_str());
+		this->PrintStack();
 		status = lua_pcall( this->state, 0, LUA_MULTRET, 0 );
 			
 	}
 	else 
-	{		
+	{	
+		//run function
 		status = lua_pcall( this->state, 0, LUA_MULTRET, 0 );
 	}
 
@@ -293,7 +313,9 @@ void LuaScript::Run()
 	}
 
 	this->runCount++;
+	*/
 }
+
 
 /*-----------------------------------------------------------
 Function:	Reset

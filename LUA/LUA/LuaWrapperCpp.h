@@ -11,7 +11,7 @@
 #include "./LuaClassBind.h"
 #include "./LuaCallbacks.h"
 #include "./LuaUtils.h"
-
+#include "./LuaFunction.h"
 
 
 

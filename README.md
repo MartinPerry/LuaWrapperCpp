@@ -183,6 +183,32 @@ The above binded class can be called from Lua as
 	
 ````
 
+Calling Lua from C++
+------------------------------------------
+You can also call Lua function from within C++. The only problem is, that script must be executed at least once before you can do this.
+So, if you want to use this, be aware of this and try not to add any functionality outside "functions".
+
+````lua
+	function add(x, y)
+		return x + y
+	end	
+	
+	function mul(x, y)
+		return x * y
+	end	
+````
+
+````c++
+
+	std::shared_ptr<Lua::LuaScript> script = //.... init LuaScript ....
+
+    Lua::LuaFunction lAdd(script, "lSum");	
+	int resAdd = lAdd.Call<int>(78, 45); //will return 123
+	
+	Lua::LuaFunction lMull(script, "mul");	
+	int resMul = lMull.Call<int>(78, 45); //will return 3510
+````
+
 Benchmark & comparison
 ------------------------------------------
 We have compared our solution with [lua-intf](https://github.com/SteveKChiu/lua-intf)
@@ -291,6 +317,27 @@ That is because each method call goes through `__index` metamethod and it slows 
 We should inspect Lua code before actual binding and see, if members are used and based on this disable `__index` call. 
 However, this is in our TO-DO list and right now, other things are more important.
 So, if you are not using class-members in your code, do not bind them to Lua.
+
+
+Test #5
+Calling Lua from C++
+
+````lua
+function testSin(x)
+	return math.sin(x)
+end
+
+function testSum(x, y)
+	return x + y
+end
+````
+
+Test runs 10,000,000.
+
+| Function      | Time Lua [ms] | Time C++ [ms]   |
+| ------------- |:-------------:| :-------------:|
+| testSin       |  1077         | 76 |
+| testSum       |  651          | 12  |
 
 References
 ------------------------------------------

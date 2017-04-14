@@ -109,7 +109,7 @@ print(a.v2)
 
 print(a.vv)
 print(a)
-os.exit()
+--os.exit()
 
 a:PrintConst()
 

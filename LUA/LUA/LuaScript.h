@@ -5,6 +5,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <type_traits>
+#include <memory>
 
 #include <vector>
 
@@ -37,7 +38,7 @@ namespace Lua
 	{
 	public:
 		
-		LuaScript(lua_State * state, const LuaString & scriptName, const LuaString & scriptFileName);
+		LuaScript(lua_State * state, const LuaString & scriptName);
 		~LuaScript();
 
 		lua_State * GetState();
@@ -54,7 +55,7 @@ namespace Lua
 		int GetFnReturnValueCount() const;
 
 		void Run();
-
+		
 		void Reset();
 		
 		void PrintStack();
@@ -70,46 +71,27 @@ namespace Lua
 		//=============================================================================
 
 		template <typename T>
-		void Push(T * val);
+		void Push(T * val)
+		{
+			this->returnValCount++;
+			if (this->returnLightUserData == false)
+			{
+				LuaCallbacks::SetNewUserDataClass(this->state, val);
+			}
+			else
+			{
+				lua_pushlightuserdata(this->state, static_cast<void *>(val));
+			}
+		};
 
-
-		template <typename T,
-			typename std::enable_if <
-			std::is_integral<T>::value == false &&
-			std::is_same<T, float>::value == false &&
-			std::is_same<T, double>::value == false &&
-			std::is_same<T, const char *>::value == false &&
-			std::is_same<T, const LuaString &>::value == false
-			>::type* = nullptr
-		>			
+		
+		template <typename T>
 		void Push(T val)
 		{
-			this->returnValCount++;			
-			T * v = reinterpret_cast<T*>(::operator new(sizeof(T)));
-			memcpy(v, &val, sizeof(T));
-			LuaCallbacks::SetNewUserDataClass<T>(this->state, v);
-		}
-
-		template <typename T, INTEGRAL_SIGNED(T)>
-		LUA_INLINE void Push(T val)
-		{
 			this->returnValCount++;
-			lua_pushinteger(this->state, val);
+			LuaFunctionsWrapper::Push(this->state, val);
 		};
-
-		template <typename T, INTEGRAL_UNSIGNED(T)>
-		LUA_INLINE void Push(T val)
-		{
-			this->returnValCount++;
-			lua_pushunsigned(this->state, val);
-		};
-
-		void Push(bool val);
-		void Push(float val);
-		void Push(double val);
-		void Push(const char * val);
-		void Push(const LuaString & val);
-
+		
 		//=============================================================================
 		//===================== Set LUA global variable ===============================
 		//=============================================================================
@@ -124,14 +106,14 @@ namespace Lua
 		LUA_INLINE void SetGlobalVar(const LuaString & varName, T val)
 		{
 			lua_pushinteger(this->state, val);
-			lua_setglobal(this->state, varName.GetConstString());
+			lua_setglobal(this->state, varName.c_str());
 		}
 
 		template <typename T, INTEGRAL_UNSIGNED(T)>
 		LUA_INLINE void SetGlobalVar(const LuaString & varName, T val)
 		{
 			lua_pushunsigned(this->state, val);
-			lua_setglobal(this->state, varName.GetConstString());
+			lua_setglobal(this->state, varName.c_str());
 		}
 
 		void SetGlobalVar(const LuaString & varName, bool val);
@@ -144,13 +126,13 @@ namespace Lua
 
 
 		friend class LuaWrapper;
-
+		friend class LuaFunction;
 
 
 	private:
 		lua_State * state;
 		LuaString scriptName;
-		LuaString scriptFileName;
+		
 		int runCount;
 		bool returnLightUserData;
 			

@@ -44,14 +44,15 @@ extern "C"
 #define START t1 = std::chrono::high_resolution_clock::now()
 #define END t2 = std::chrono::high_resolution_clock::now()
 #define PRINT_TIME std::cout << "Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " ms" << std::endl
-#define ANTI_OPTIMALIZATION double sum = 0; for (int i = 0; i < ARR_SIZE; i++) { sum += res[i]; } std::cout << "Array sum = " << sum << std::endl;
-#define RESET_ARRAY for (int i = 0; i < ARR_SIZE; i++) { res[i] = 0;}
+#define ANTI_OPTIMALIZATION double sum = 0; for (int i = 0; i < COUNT; i++) { sum += res[i]; } std::cout << "Array sum = " << sum << std::endl;
+#define RESET_ARRAY for (int i = 0; i < COUNT; i++) { res[i] = 0;}
 
 #define TEST_INIT const int COUNT = 10000000; \
-	const int ARR_SIZE = 10000000; \
 	std::chrono::high_resolution_clock::time_point t1; \
 	std::chrono::high_resolution_clock::time_point t2; \
-	double res[ARR_SIZE];
+	double * res = new double[COUNT + 1];
+
+#define TEST_END delete[] res;
 
 //===============================================================================
 //===============================================================================
@@ -59,7 +60,7 @@ extern "C"
 
 void LuaWrapperCppCenchmark(const LuaString & name)
 {
-	std::shared_ptr<Lua::LuaScript> ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
+	std::shared_ptr<Lua::LuaScript> ls = Lua::LuaWrapper::GetInstance()->AddScriptFromFile(name, name);
 	
 
 	Lua::LuaClassBind<Account> cb("Account");
@@ -109,6 +110,8 @@ void LuaWrapperCppCenchmark(const LuaString & name)
 	END;
 	PRINT_TIME;
 
+	TEST_END;
+
 	
 }
 
@@ -118,7 +121,7 @@ void LuaIntfBenchmark(const LuaString & name)
 	
 
 
-	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
+	Lua::LuaScript *ls = Lua::LuaWrapper::GetInstance()->AddScriptFromFile(name, name);
 	
 
 	LuaIntf::LuaBinding(ls->GetState()).beginClass<Account>("Account")
@@ -151,6 +154,8 @@ void LuaIntfBenchmark(const LuaString & name)
 	ls->Run();
 	END;
 	PRINT_TIME;
+
+	TEST_END;
 }
 #endif
 
@@ -161,14 +166,14 @@ void CppBenchmark()
 
 	START;
 	Account * a = new Account(150);
-	for (int i = 1; i < COUNT; i++)
+	for (int i = 1; i <= COUNT; i++)
 	{
 		a->deposit(i);
 	}
 	printf("%f\n", a->balance());
 
 #ifdef WITH_ATTRIBUTES
-	for (int i = 1; i < COUNT; i++)
+	for (int i = 1; i <= COUNT; i++)
 	{
 		a->val += i;
 	}
@@ -177,9 +182,11 @@ void CppBenchmark()
 
 	END;
 	PRINT_TIME;
+
+	TEST_END;
 }
 
-void RunBenchmark()
+void RunBenchmarkCppFromLua()
 {
 	LuaString name = "benchmark.lua";
 
@@ -193,4 +200,89 @@ void RunBenchmark()
 
 	CppBenchmark();
 	
+}
+
+
+double testSinCpp(double x)
+{
+	return std::sin(x);
+}
+
+double testSumCpp(double x, double y)
+{
+	return x + y;
+}
+
+void RunBenchmarkLuaFromCpp()
+{
+	LuaString script = "function testSin(x) return math.sin(x) end\n";
+	script += "function testSum(x, y) return x + y end\n";
+
+	std::shared_ptr<Lua::LuaScript> s = Lua::LuaWrapper::GetInstance()->AddScript("test_sin", script);
+
+	Lua::LuaFunction lfSin(s, "testSin");
+	Lua::LuaFunction lfSum(s, "testSum");
+	
+	TEST_INIT;	
+	RESET_ARRAY;
+
+	START;
+
+	double x = 0.1;
+	for (int i = 1; i <= COUNT; i++)
+	{
+		res[i] += lfSin.Call<double>(x);
+		x += 0.01;
+	}
+
+	END;	
+	PRINT_TIME;
+
+	
+	START;
+
+	x = 0.1;
+	for (int i = 1; i <= COUNT; i++)
+	{
+		res[i] += testSinCpp(x);
+		x += 0.01;
+	}
+
+	END;
+	PRINT_TIME;
+	
+	//-----------------------------------
+
+	START;
+
+	x = 0.1;
+	double y = 0.5;
+	for (int i = 1; i <= COUNT; i++)
+	{
+		res[i] += lfSum.Call<double>(x, y);
+		x += 0.01;
+		y += i;
+	}
+
+	END;
+	PRINT_TIME;
+
+
+	START;
+
+	x = 0.1;
+	y = 0.5;
+	for (int i = 1; i <= COUNT; i++)
+	{
+		res[i] += testSumCpp(x, y);
+		x += 0.01;
+		y += i;
+	}
+
+	END;	
+	PRINT_TIME;
+
+	ANTI_OPTIMALIZATION;
+
+	TEST_END;
 }

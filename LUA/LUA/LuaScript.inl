@@ -4,64 +4,6 @@
 
 
 
-
-
-//=============================================================================
-//===================== Push data to LUA stack ================================
-//=============================================================================
-
-template <typename T>
-LUA_INLINE void LuaScript::Push(T * val)
-{
-	this->returnValCount++;	
-	if (this->returnLightUserData == false)
-	{
-		LuaCallbacks::SetNewUserDataClass(this->state, val);
-	}
-	else
-	{
-		lua_pushlightuserdata(this->state, static_cast<void *>(val));
-	}
-};
-
-
-LUA_INLINE void LuaScript::Push(bool val)
-{
-	this->returnValCount++;
-	lua_pushboolean(this->state, val);
-};
-
-
-
-LUA_INLINE void LuaScript::Push(float val)
-{
-	this->returnValCount++;
-	lua_pushnumber(this->state, val);
-};
-
-
-LUA_INLINE void LuaScript::Push(double val)
-{
-	this->returnValCount++;
-	lua_pushnumber(this->state, val);
-};
-
-
-LUA_INLINE void LuaScript::Push(const char * val)
-{
-	this->returnValCount++;
-	lua_pushstring(this->state, val);
-};
-
-
-LUA_INLINE void LuaScript::Push(const LuaString & val)
-{
-	this->returnValCount++;
-	lua_pushstring(this->state, val.c_str());
-};
-
-
-
 //=============================================================================
 //===================== Set LUA global variable ===============================
 //=============================================================================

@@ -1,6 +1,7 @@
 #ifndef BENCHMARK_H
 #define BENCHMARK_H
 
-extern void RunBenchmark();
+extern void RunBenchmarkCppFromLua();
+extern void RunBenchmarkLuaFromCpp();
 
 #endif

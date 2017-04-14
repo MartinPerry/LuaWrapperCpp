@@ -185,7 +185,7 @@ std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 	//http://loadcode.blogspot.cz/2007/02/wrapping-c-classes-in-lua.html
 	//https://john.nachtimwald.com/2014/07/12/wrapping-a-c-library-in-lua/
 
-	std::shared_ptr<Lua::LuaScript> ls = Lua::LuaWrapper::GetInstance()->AddScript(name, name);
+	std::shared_ptr<Lua::LuaScript> ls = Lua::LuaWrapper::GetInstance()->AddScriptFromFile(name, name);
 
 	//using bar_t = TypeOverload<Account, &Account::Print5, int>::type;
 
@@ -298,11 +298,18 @@ void doSomething2()
 }
 
 
+float ConvertXY(float x)
+{
+	return std::sin(x);
+}
+
 
 
 int main(int argc, char * argv[])
 {
-
+	
+	
+	
 
 	/*
 	MyClass cl;
@@ -314,12 +321,17 @@ int main(int argc, char * argv[])
 
 	return 0;
 	*/
+	
 	Lua::LuaWrapper::Initialize([](const LuaString & str) -> LuaString {
 		return Lua::LuaUtils::LoadFromFile(str);
 	});
 
+	
+	RunBenchmarkLuaFromCpp();
 
-	//RunBenchmark();
+	//RunBenchmarkCppFromLua();
+
+
 	/*
 	Account * a = new Account(150);
 	int aa = 100;
@@ -341,9 +353,31 @@ int main(int argc, char * argv[])
 
 
 	
+	//LuaString script = "print(\"\" .. math.sin(x))";
+	LuaString script = "function test1 (x, y) return x + y end function ss (x) return math.sin(x) end";
+
+	
+	std::shared_ptr<Lua::LuaScript> ls2 = Lua::LuaWrapper::GetInstance()->AddScript("xxx", script);
+	//ls2->Run();
+
 	
 
+	Lua::LuaFunction lf2(ls2, "ss");
 
+	//lf.Call<int>();
+	float r2 = lf2.Call<float>(0.5);
+	float r3 = lf2.Call<float>(0.1);
+
+	printf("xx");
+
+	return 0;
+
+
+	ls2->SetGlobalVar("x", 11);
+	ls2->Run();
+
+	
+	//return 0;
 	
 	std::shared_ptr<Lua::LuaScript> ls = Create("t2.lua");
 	
@@ -380,7 +414,7 @@ int main(int argc, char * argv[])
 	
 
 
-	MyUtils::LuaScript *ls2 = MyUtils::LuaWrapper::GetInstance()->AddScript("t.lua", "t.lua");
+	MyUtils::LuaScript *ls2 = MyUtils::LuaWrapper::GetInstance()->AddScriptFromFile("t.lua", "t.lua");
 	
 	MyFunction<int, TestClass *, int> * ff = new MyFunction<int, TestClass *, int>();
 	ff->f = &HelloMethodParamReturn2;

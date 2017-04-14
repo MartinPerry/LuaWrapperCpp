@@ -41,7 +41,7 @@ void LuaWrapper::Initialize(ScriptLoaderCallback loaderCallback)
 	if (instance == NULL)
 	{
 		instance = new LuaWrapper();
-		instance->scriptLoaderCallback = loaderCallback;
+		instance->scriptLoaderCallback = loaderCallback;		
 	}
 }
 
@@ -99,14 +99,22 @@ LuaString LuaWrapper::GetScriptFromFile(const LuaString & scriptFileName)
 	return this->scriptLoaderCallback(scriptFileName);
 }
 
-std::shared_ptr<LuaScript> LuaWrapper::AddScript(const LuaString & scriptFileName)
+std::shared_ptr<LuaScript> LuaWrapper::AddScriptFromFile(const LuaString & scriptFileName)
 {
 	return this->AddScript(scriptFileName, scriptFileName);
 }
 
-std::shared_ptr<LuaScript> LuaWrapper::AddScript(const LuaString & scriptName, const LuaString & scriptFileName)
+
+
+std::shared_ptr<LuaScript> LuaWrapper::AddScriptFromFile(const LuaString & scriptName, const LuaString & scriptFileName)
 {
 	LuaString script = this->GetScriptFromFile(scriptFileName);
+	return this->AddScript(scriptName, script);
+}
+
+
+std::shared_ptr<LuaScript> LuaWrapper::AddScript(const LuaString & scriptName, const LuaString & script)
+{
 
 	lua_State * state = luaL_newstate();
 	//int status = luaL_loadstring( state, script.GetConstString() );
@@ -122,7 +130,7 @@ std::shared_ptr<LuaScript> LuaWrapper::AddScript(const LuaString & scriptName, c
 	lua_setglobal(state, scriptName.c_str());
 	
 
-	std::shared_ptr<LuaScript> ls = std::shared_ptr<LuaScript>(new LuaScript(state, scriptName, scriptFileName));
+	std::shared_ptr<LuaScript> ls = std::shared_ptr<LuaScript>(new LuaScript(state, scriptName));
 		
 	for (auto it = this->classes.begin(); it != this->classes.end(); it++)
 	{

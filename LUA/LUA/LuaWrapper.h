@@ -36,9 +36,9 @@ namespace Lua
 		bool ExistScript(lua_State * state) const;
 		
 		
-		std::shared_ptr<LuaScript> AddScript(const LuaString & scriptFileName);
-		std::shared_ptr<LuaScript> AddScript(const LuaString & scriptName, const LuaString & scriptFileName);
-
+		std::shared_ptr<LuaScript> AddScriptFromFile(const LuaString & scriptFileName);
+		std::shared_ptr<LuaScript> AddScriptFromFile(const LuaString & scriptName, const LuaString & scriptFileName);
+		std::shared_ptr<LuaScript> AddScript(const LuaString & scriptName, const LuaString & script);
 		
 		friend class LuaScript;
 
