@@ -202,7 +202,7 @@ So, if you want to use this, be aware of this and try not to add any functionali
 
 	std::shared_ptr<Lua::LuaScript> script = //.... init LuaScript ....
 
-    Lua::LuaFunction lAdd(script, "lSum");	
+    Lua::LuaFunction lAdd(script, "sum");	
 	int resAdd = lAdd.Call<int>(78, 45); //will return 123
 	
 	Lua::LuaFunction lMull(script, "mul");	
