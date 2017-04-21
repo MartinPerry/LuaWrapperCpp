@@ -16,11 +16,14 @@ extern "C"
 #include <vector>
 
 
-#include "./LuaWrapper.h"
-#include "./LuaClassBind.h"
-
 #include "./LuaMacros.h"
 #include "./LuaTypes.h"
+
+
+#include "./LuaClassBind.h"
+
+
+
 
 namespace Lua 
 {
@@ -33,7 +36,16 @@ namespace Lua
 	-------------------------------------------------------------*/
 	class LuaFunctionsWrapper
 	{
+        private:
+        
+            template <typename T>
+            struct tag { using type = T; };
+        
 		public:
+		
+			void Test()
+			{
+			}
 
 			template <class T>
 			static LUA_INLINE auto GetFnInput(lua_State * L, int i) 
@@ -53,16 +65,6 @@ namespace Lua
 			
 		
 		private:
-
-			template <typename T>
-			struct tag
-			{
-				using type = T;
-			};
-		
-
-
-			
 
 			//=============================================================================
 			//===================== Get data passed from Lua callback function ================================
@@ -229,12 +231,8 @@ namespace Lua
 			{
 				lua_pushstring(L, val);
 			};
-			
-			
-
-	};
-
-	
+						
+	};	
 }
 
 #endif

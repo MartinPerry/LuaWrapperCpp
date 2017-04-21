@@ -327,7 +327,7 @@ int main(int argc, char * argv[])
 	});
 
 	
-	RunBenchmarkLuaFromCpp();
+	//RunBenchmarkLuaFromCpp();
 
 	//RunBenchmarkCppFromLua();
 
@@ -354,7 +354,7 @@ int main(int argc, char * argv[])
 
 	
 	//LuaString script = "print(\"\" .. math.sin(x))";
-	LuaString script = "function test1 (x, y) return x + y end function ss (x) return math.sin(x) end";
+	LuaString script = "function test1(x, y) return x + y end function ss(x) return math.sin(x) end";
 
 	
 	std::shared_ptr<Lua::LuaScript> ls2 = Lua::LuaWrapper::GetInstance()->AddScript("xxx", script);
@@ -370,7 +370,7 @@ int main(int argc, char * argv[])
 
 	printf("xx");
 
-	return 0;
+	//return 0;
 
 
 	ls2->SetGlobalVar("x", 11);

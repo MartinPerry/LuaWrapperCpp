@@ -1,6 +1,12 @@
 #ifndef LUA_CALLBACKS_H
 #define LUA_CALLBACKS_H
 
+namespace Lua
+{
+	class LuaFunctionsWrapper;
+	class LuaScript;
+}
+
 #include <typeinfo>
 #include <typeindex>
 #include <functional>
@@ -18,6 +24,7 @@ extern "C"
 
 #include "./LuaMacros.h"
 #include "./LuaTypes.h"
+
 #include "./LuaScript.h"
 #include "./LuaFunctionWrapper.h"
 
@@ -52,17 +59,27 @@ struct ClassOverloadMethod<T> {
 
 
 
-template<class _Ty>
+template<bool, class Ty1, class Ty2> struct MyIf
+{	// type is _Ty2 for assumed false
+	typedef Ty2 type;
+};
+
+template<class Ty1, class Ty2> struct MyIf<true, Ty1, Ty2>
+{	// type is _Ty1 for assumed true
+	typedef Ty1 type;
+};
+
+template<class Ty>
 struct my_decay
 {
 	// determines decayed version of _Ty
-	typedef typename std::decay<_Ty>::type _Ty1;
+	typedef typename std::decay<Ty>::type Ty1;
 
-	typedef typename std::_If<
-		std::is_arithmetic<_Ty1>::value, typename _Ty1,
-		typename std::_If<
-			std::is_same<LuaString, _Ty1>::value, typename _Ty1,
-			typename _Ty
+	typedef typename MyIf<
+		std::is_arithmetic<Ty1>::value, Ty1,
+		typename MyIf<
+			std::is_same<LuaString, Ty1>::value, Ty1,			
+			Ty
 		>::type
 	>::type type;
 };
@@ -98,7 +115,7 @@ struct getTuple<T, Args...>
 		std::tuple<Args...> args = getTuple<Args...>::get(script);
 		return std::tuple_cat(t, args);
 		*/
-
+		
 		std::tuple<T> t = std::forward_as_tuple(Lua::LuaFunctionsWrapper::GetFnInput<T>(L, i));
 		std::tuple<Args...> args = getTuple<Args...>::get(L, i + 1);
 		return std::tuple_cat(std::move(t), std::move(args));
@@ -298,14 +315,9 @@ struct func_impl_method<Res(*)(Args...), MethodName, std::index_sequence<Is...>>
 //=============================================================================================
 //main part of the callbacks
 
-
-struct LuaCallbacks
-{	
-	//http://stackoverflow.com/questions/29194858/order-of-function-calls-in-variadic-template-expansion
-
-	//=============================================================================================
-	// Some Defines
-	//=============================================================================================
+//=============================================================================================
+// Some Defines
+//=============================================================================================
 
 #define NO_RETURN true
 #define HAVE_RETURN false
@@ -315,7 +327,7 @@ struct LuaCallbacks
 #define LUA_CLASS_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) typename MethodType, \
 		MethodType MethodName, \
 		typename MethodInfo = class_method_info<MethodType>, \
-		typename RetVal = MethodInfo::RetVal, \
+		typename RetVal = typename MethodInfo::RetVal, \
 		typename std::enable_if <std::is_same<void, RetVal>::value == VOID_RET_TYPE>::type* = nullptr, \
 		typename std::enable_if <(MethodInfo::ArgsCount ARGS 0), void>::type* = nullptr, \
 		typename std::enable_if <(MethodInfo::IsClassMethod == true)>::type* = nullptr
@@ -323,15 +335,23 @@ struct LuaCallbacks
 #define LUA_METHOD_SIGNATURE(MethodType, VOID_RET_TYPE, ARGS) typename MethodType, \
 		MethodType MethodName, \
 		typename MethodInfo = method_info<MethodType>, \
-		typename RetVal = MethodInfo::RetVal, \
+		typename RetVal = typename MethodInfo::RetVal, \
 		typename std::enable_if <std::is_same<void, RetVal>::value == VOID_RET_TYPE>::type* = nullptr, \
 		typename std::enable_if <(MethodInfo::ArgsCount ARGS 0), void>::type* = nullptr, \
 		typename std::enable_if <(MethodInfo::IsClassMethod == false)>::type* = nullptr
 
 #define LUA_CLASS_FUNCTION_BODY \
-		MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1); \
+		typename MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1); \
 		std::shared_ptr<Lua::LuaScript> script = Lua::LuaWrapper::GetInstance()->GetScript(L); \
-		script->Reset();		
+		script->Reset();
+
+
+
+
+struct LuaCallbacks
+{	
+	//http://stackoverflow.com/questions/29194858/order-of-function-calls-in-variadic-template-expansion
+		
 
 	//=============================================================================================
 	// Class callbacks
@@ -341,7 +361,7 @@ struct LuaCallbacks
 	template <LUA_CLASS_SIGNATURE(MethodType, NO_RETURN, HAVE_ARGS)>
 	static int function(lua_State *L)
 	{		
-		MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1);
+		typename MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1);
 
 		func_impl_class_method<MethodType, MethodName>::call(a, L);
 
@@ -363,7 +383,7 @@ struct LuaCallbacks
 	template <LUA_CLASS_SIGNATURE(MethodType, NO_RETURN, NO_ARGS)>
 	static int function(lua_State *L)
 	{
-		MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1); 
+		typename MethodInfo::ClassType *a = LuaCallbacks::GetPtr<MethodInfo::ClassType>(L, 1);
 		
 		(a->*MethodName)();
 

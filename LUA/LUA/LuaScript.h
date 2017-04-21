@@ -1,6 +1,10 @@
 #ifndef LUA_SCRIPT_H
 #define LUA_SCRIPT_H
 
+namespace Lua
+{
+	struct LuaClass;
+}
 
 #include <typeinfo>
 #include <typeindex>
@@ -16,21 +20,11 @@ extern "C"
 #include "./lua_lib/lauxlib.h"
 }
 
-#include "./LuaWrapper.h"
-#include "./LuaClassBind.h"
-
 #include "./LuaMacros.h"
 #include "./LuaTypes.h"
 
 
-
-
-#define INTEGRAL_SIGNED(T) typename std::enable_if <std::is_integral<T>::value>::type* = nullptr, \
-		typename std::enable_if <std::is_signed<T>::value == true>::type* = nullptr
-
-#define INTEGRAL_UNSIGNED(T) typename std::enable_if <std::is_integral<T>::value>::type* = nullptr, \
-		typename std::enable_if <std::is_signed<T>::value == false>::type* = nullptr	
-
+#include "./LuaFunctionWrapper.h"
 
 namespace Lua
 {
@@ -125,7 +119,7 @@ namespace Lua
 
 
 
-		friend class LuaWrapper;
+		//friend class LuaWrapper;
 		friend class LuaFunction;
 
 

@@ -1,7 +1,7 @@
 #include "./LuaWrapper.h"
 
 
-
+#include "./LuaClassBind.h"
 #include "./LuaWrapperCpp.h"
 
 

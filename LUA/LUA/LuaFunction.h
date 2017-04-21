@@ -16,6 +16,7 @@ extern "C"
 #include "./LuaTypes.h"
 
 #include "./LuaScript.h"
+#include "./LuaFunctionWrapper.h"
 
 //https://www.lua.org/pil/25.2.html
 

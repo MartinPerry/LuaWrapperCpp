@@ -19,7 +19,7 @@ extern "C"
 #include "./LuaMacros.h"
 #include "./LuaTypes.h"
 
-
+#include "./LuaCallbacks.h"
 #include "./LuaUtils.h"
 
 namespace Lua
@@ -30,6 +30,7 @@ namespace Lua
 	struct LuaClassBindToString : public LuaClassToString
 	{					
 		LuaClassBindToString(LuaToStringCallback<T> f) : f(f) {};
+		virtual ~LuaClassBindToString() = default;
 
 		virtual LuaString Call(void * ptr) const { return this->f(static_cast<T *>(ptr)); };
 
@@ -126,6 +127,7 @@ namespace Lua
 			attrs.push_back({ 0, 0 });
 			ctors.push_back({ 0,0 });
 						
+            
 			this->garbage_collect = LuaCallbacks::garbage_collect<T>;
 			this->to_string = LuaCallbacks::to_string<T>;
 			this->index = LuaCallbacks::index<T>;

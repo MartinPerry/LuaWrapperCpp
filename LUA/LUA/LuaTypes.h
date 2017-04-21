@@ -1,16 +1,18 @@
 #ifndef LUA_TYPES_H
 #define LUA_TYPES_H
 
-#include "./LuaMacros.h"
-
-//forward declarations
-
-struct lua_State;
-
 namespace Lua
 {
 	class LuaScript;
 }
+
+struct lua_State;
+
+
+#include "./LuaMacros.h"
+
+//forward declarations
+
 //=============================================================================================
 // Other structures
 

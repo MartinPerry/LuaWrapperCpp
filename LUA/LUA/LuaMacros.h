@@ -13,7 +13,11 @@
 //#define LUA_STRING MyStringAnsi
 
 //inline call
-#define LUA_INLINE __forceinline 
+#ifdef _MSC_VER
+#define LUA_INLINE __forceinline
+#else
+#define LUA_INLINE __attribute__((always_inline))
+#endif
 
 //FORCE_INLINE
 
@@ -38,6 +42,15 @@
 
 #define LUA_SAFE_DELETE(a) {if (a != nullptr) { delete a; a = nullptr; }};
 #define LUA_SAFE_DELETE_ARRAY(a) {if (a != nullptr) { delete[] a; a = nullptr; }};
+
+
+
+#define INTEGRAL_SIGNED(T) typename std::enable_if <std::is_integral<T>::value>::type* = nullptr, \
+    typename std::enable_if <std::is_signed<T>::value == true>::type* = nullptr
+
+#define INTEGRAL_UNSIGNED(T) typename std::enable_if <std::is_integral<T>::value>::type* = nullptr, \
+    typename std::enable_if <std::is_signed<T>::value == false>::type* = nullptr
+
 //=============================================================================================
 // Debug logging
 

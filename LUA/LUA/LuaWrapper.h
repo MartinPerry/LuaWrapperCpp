@@ -4,6 +4,7 @@
 namespace Lua
 {
 	class LuaScript;
+	struct LuaClass;
 }
 
 struct lua_State;
@@ -14,8 +15,7 @@ struct lua_State;
 
 #include "./LuaMacros.h"
 #include "./LuaTypes.h"
-#include "./LuaScript.h"
-#include "./LuaClassBind.h"
+
 
 namespace Lua
 {
