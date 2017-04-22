@@ -21,6 +21,7 @@
 #include <array>
 #include <tuple>
 #include <vector>
+#include <cmath>
 
 extern "C"
 {

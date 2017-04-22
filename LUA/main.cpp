@@ -35,7 +35,7 @@
 //=================================================================================================
 //=================================================================================================
 //=================================================================================================
-
+/*
 void HelloMethod()
 {
 	printf("Hello method\n");
@@ -89,14 +89,7 @@ public:
 
 	}
 
-	/*
-	template <typename T>
-	AnyType(T && value)
-		: ptr(new DerivedType<std::decay<T>::type>(std::forward<T>(value)))
-	{		
-	};
-	*/
-
+	
 	~AnyType()
 	{
 		delete ptr;
@@ -167,7 +160,7 @@ private:
 
 
 
-
+*/
 
 //==================================================================================================
 //==================================================================================================
@@ -262,8 +255,8 @@ std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 		
 
 
-	ls->RegisterLuaFunction("Print_fce", METHOD(HelloMethod));
-	ls->RegisterLuaFunction("Print_fce2", METHOD(HelloMethodParam));
+	//ls->RegisterLuaFunction("Print_fce", METHOD(HelloMethod));
+	//ls->RegisterLuaFunction("Print_fce2", METHOD(HelloMethodParam));
 
 
 	
@@ -278,6 +271,7 @@ std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 	return ls;
 }
 
+/*
 struct MyClass
 {
 	int i;
@@ -302,7 +296,7 @@ float ConvertXY(float x)
 {
 	return std::sin(x);
 }
-
+*/
 
 
 int main(int argc, char * argv[])

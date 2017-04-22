@@ -1,4 +1,4 @@
-#include "./LuaScript.h"
+#include "./LuaCallbacks.h"
 
 extern "C"
 {
@@ -8,7 +8,6 @@ extern "C"
 }
 
 
-#include "./LuaCallbacks.h"
 
 
 using namespace Lua;
@@ -223,7 +222,7 @@ void LuaScript::RegisterLuaClass(const LuaClass & classBind)
 		for (size_t i = 0; i < classBind.attrs.size() - 1; i++)
 		{
 			lua_pushstring(L, classBind.attrs[i].name);
-			lua_pushlightuserdata(L, classBind.attrs[i].func);
+			lua_pushlightuserdata(L, reinterpret_cast<void *>(classBind.attrs[i].func));
 			lua_rawset(L, -3);
 		}
 	}

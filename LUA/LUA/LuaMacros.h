@@ -16,7 +16,7 @@
 #ifdef _MSC_VER
 #define LUA_INLINE __forceinline
 #else
-#define LUA_INLINE __attribute__((always_inline))
+#define LUA_INLINE inline __attribute__((always_inline))
 #endif
 
 //FORCE_INLINE

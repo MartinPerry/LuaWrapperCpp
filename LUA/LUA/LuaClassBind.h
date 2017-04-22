@@ -179,7 +179,7 @@ namespace Lua
 
 		void SetDefaultCtor()
 		{
-			this->create_new = LuaCallbacks::create_new_default<T>;
+			this->create_new = LuaCallbacks::create_new<T>;
 		}
 
 		void AddMethod(const LuaString & name, lua_CFunction f)

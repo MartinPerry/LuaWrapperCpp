@@ -9,6 +9,7 @@ namespace Lua
 
 struct lua_State;
 
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>

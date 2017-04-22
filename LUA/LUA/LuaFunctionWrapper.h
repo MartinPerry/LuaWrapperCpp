@@ -48,8 +48,8 @@ namespace Lua
 			}
 
 			template <class T>
-			static LUA_INLINE auto GetFnInput(lua_State * L, int i) 
-				-> decltype(GetFnInputImpl(L, i, tag<T>{}))
+			static LUA_INLINE T GetFnInput(lua_State * L, int i)
+				//-> decltype(GetFnInputImpl(L, i, tag<T>{}))
 			{
 				return LuaFunctionsWrapper::GetFnInputImpl(L, i, tag<T>{});
 			};

@@ -1,7 +1,6 @@
-#include "./LuaWrapper.h"
+#include "./LuaCallbacks.h"
 
 
-#include "./LuaClassBind.h"
 #include "./LuaWrapperCpp.h"
 
 
