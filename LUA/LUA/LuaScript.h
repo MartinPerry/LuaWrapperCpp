@@ -65,26 +65,12 @@ namespace Lua
 		//=============================================================================
 
 		template <typename T>
-		void Push(T * val)
-		{
-			this->returnValCount++;
-			if (this->returnLightUserData == false)
-			{
-				LuaCallbacks::SetNewUserDataClass(this->state, val);
-			}
-			else
-			{
-				lua_pushlightuserdata(this->state, static_cast<void *>(val));
-			}
-		};
+		void Push(T * val);
+		
 
 		
 		template <typename T>
-		void Push(T val)
-		{
-			this->returnValCount++;
-			LuaFunctionsWrapper::Push(this->state, val);
-		};
+		void Push(T val);
 		
 		//=============================================================================
 		//===================== Set LUA global variable ===============================
@@ -96,19 +82,14 @@ namespace Lua
 		template <typename T>
 		void SetGlobalVarLight(const LuaString & varName, T * val);
 
-		template <typename T, INTEGRAL_SIGNED(T)>
-		LUA_INLINE void SetGlobalVar(const LuaString & varName, T val)
-		{
-			lua_pushinteger(this->state, val);
-			lua_setglobal(this->state, varName.c_str());
-		}
 
-		template <typename T, INTEGRAL_UNSIGNED(T)>
-		LUA_INLINE void SetGlobalVar(const LuaString & varName, T val)
-		{
-			lua_pushunsigned(this->state, val);
-			lua_setglobal(this->state, varName.c_str());
-		}
+
+		template <typename T, INTEGRAL_SIGNED(T)>		
+		void SetGlobalVar(const LuaString & varName, T val);
+		
+		template <typename T, INTEGRAL_UNSIGNED(T)>		
+		void SetGlobalVar(const LuaString & varName, T val);
+		
 
 		void SetGlobalVar(const LuaString & varName, bool val);
 		void SetGlobalVar(const LuaString & varName, float val);

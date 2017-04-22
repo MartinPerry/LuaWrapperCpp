@@ -321,9 +321,10 @@ int main(int argc, char * argv[])
 	});
 
 	
-	//RunBenchmarkLuaFromCpp();
+	//
+	RunBenchmarkLuaFromCpp();
 
-	//RunBenchmarkCppFromLua();
+	RunBenchmarkCppFromLua();
 
 
 	/*

@@ -1,5 +1,5 @@
-#ifndef LUA_WARPPER_CPP_H
-#define LUA_WARPPER_CPP_H
+#ifndef LUA_WRAPPER_CPP_H
+#define LUA_WRAPPER_CPP_H
 
 
 #include "./LuaMacros.h"

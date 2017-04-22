@@ -45,11 +45,16 @@
 
 
 
-#define INTEGRAL_SIGNED(T) typename std::enable_if <std::is_integral<T>::value>::type* = nullptr, \
-    typename std::enable_if <std::is_signed<T>::value == true>::type* = nullptr
+#define INTEGRAL_SIGNED(T) typename = typename std::enable_if <std::is_integral<T>::value>::type, \
+    typename = typename std::enable_if <std::is_signed<T>::value == true>::type
 
-#define INTEGRAL_UNSIGNED(T) typename std::enable_if <std::is_integral<T>::value>::type* = nullptr, \
-    typename std::enable_if <std::is_signed<T>::value == false>::type* = nullptr
+#define INTEGRAL_SIGNED_IMPL(T) typename, typename
+
+#define INTEGRAL_UNSIGNED(T) typename = typename std::enable_if <std::is_integral<T>::value>::type, \
+    typename = typename std::enable_if <std::is_signed<T>::value == false>::type, \
+	typename = void
+
+#define INTEGRAL_UNSIGNED_IMPL(T) typename, typename, typename
 
 //=============================================================================================
 // Debug logging

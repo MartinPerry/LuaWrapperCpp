@@ -61,9 +61,9 @@ namespace Lua
 		LuaClass(const LuaString & ctorName, std::type_index typeIndex) :
 			typeIndex(typeIndex),
 			ctorName(ctorName),
-			create_new(nullptr),
-			garbage_collect(nullptr),
 			toString(nullptr),
+			create_new(nullptr),
+			garbage_collect(nullptr),			
 			index(nullptr),
 			new_index(nullptr)
 		{
