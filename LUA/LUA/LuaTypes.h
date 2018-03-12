@@ -17,6 +17,7 @@ struct lua_State;
 // Other structures
 
 #include <string>
+#include "../Strings/MyString.h"
 
 #include <functional>
 #include <memory>
@@ -41,6 +42,7 @@ using LuaToStringCallback = std::function<LuaString(T *)>;
 
 struct LuaClassToString
 {
+    virtual ~LuaClassToString() = default;
 	virtual LuaString Call(void * ptr) const = 0;	
 };
 
