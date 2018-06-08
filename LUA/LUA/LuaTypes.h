@@ -17,7 +17,7 @@ struct lua_State;
 // Other structures
 
 #include <string>
-#include "../Strings/MyString.h"
+//#include "../Strings/MyString.h"
 
 #include <functional>
 #include <memory>
