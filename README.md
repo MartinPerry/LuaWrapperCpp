@@ -80,31 +80,31 @@ Binding C methods to wrapper
 We can bind classic C methods.
 
 ````c++
-	void cfunc1(int v)
-	{
-		printf("Hello method Param: %i\n", v);
-	}
+void cfunc1(int v)
+{
+	printf("Hello method Param: %i\n", v);
+}
 
-	void cfunc(int v)
-	{
-		printf("Hello method Param: %i\n", v);
-	}
+void cfunc(int v)
+{
+	printf("Hello method Param: %i\n", v);
+}
 
-	void cfunc(int v1, int v2)
-	{
-		printf("Hello method Param: %i %i\n", v1, v2);
-	}
+void cfunc(int v1, int v2)
+{
+	printf("Hello method Param: %i %i\n", v1, v2);
+}
 ````
 
 And bind to Lua
 
 ````c++
 
-	std::shared_ptr<Lua::LuaScript> ls = ....;
+std::shared_ptr<Lua::LuaScript> ls = ....;
 
-	ls->RegisterLuaFunction("cfunc_1", METHOD_OVERLOAD(cfunc, int));	
-	ls->RegisterLuaFunction("cfunc_2", METHOD_OVERLOAD(cfunc, int, int));	
-	ls->RegisterLuaFunction("cfunc", METHOD(cfunc1));	
+ls->RegisterLuaFunction("cfunc_1", METHOD_OVERLOAD(cfunc, int));	
+ls->RegisterLuaFunction("cfunc_2", METHOD_OVERLOAD(cfunc, int, int));	
+ls->RegisterLuaFunction("cfunc", METHOD(cfunc1));	
 
 ````
 
@@ -116,71 +116,70 @@ Each class is wrapped with `LuaClassBind`.
 
 We have simple C++ test class:
 ````c++
-	struct TestStruct 
-	{
-		float m_x = 0.0f;
-		float m_y = 0.0f;
-	};
+struct TestStruct 
+{
+	float m_x = 0.0f;
+	float m_y = 0.0f;
+};
 
-	class TestClass
-    {
-    public:
-        double m_val = 148;
-		TestStruct m_tc;
+class TestClass
+{
+public:
+    double m_val = 148;
+	TestStruct m_tc;
 		
-		TestClass(double val) { m_val = val; }
-		TestClass(double v1, double v2) { m_val = v1 * v2; }
+	TestClass(double val) { m_val = val; }
+	TestClass(double v1, double v2) { m_val = v1 * v2; }
 				
-		void Print0() { printf("PRINTF_0\n"); }
+	void Print0() { printf("PRINTF_0\n"); }
 
-		void Print0(double vl, double v2) { printf("PRINTF_0: overload %f %f\n", vl, v2); }
+	void Print0(double vl, double v2) { printf("PRINTF_0: overload %f %f\n", vl, v2); }
 
-		void Print1(const short& v) { printf("PRINTF_1 %i\n", v); }
+	void Print1(const short& v) { printf("PRINTF_1 %i\n", v); }
         
-		int Print2() { printf("PRINTF_2\n"); return 5;}
+	int Print2() { printf("PRINTF_2\n"); return 5;}
 		
-		void Print3(TestClass * t) { printf("PRINTF_3 % f\n", t->m_val);}
+	void Print3(TestClass * t) { printf("PRINTF_3 % f\n", t->m_val);}
 		
-		void Print4(TestClass & t) { printf("PRINTF_4 % f\n", t.m_val);}
+	void Print4(TestClass & t) { printf("PRINTF_4 % f\n", t.m_val);}
 		
-		void Print5() const { printf("PRINTF_5\n"); }
-    };	
+	void Print5() const { printf("PRINTF_5\n"); }
+};	
 ````
 
 And bind it to `LuaClassBind`
 ````c++
 
-	Lua::LuaClassBind<TestStruct> sb("TestStruct");	
-	sb.SetDefaultCtor<>();
+Lua::LuaClassBind<TestStruct> sb("TestStruct");	
+sb.SetDefaultCtor<>();
 	
-	sb.AddAttribute("m_x", CLASS_ATTRIBUTE(TestClass, m_x));
-	sb.AddAttribute("m_y", CLASS_ATTRIBUTE(TestClass, m_y));
+sb.AddAttribute("m_x", CLASS_ATTRIBUTE(TestClass, m_x));
+sb.AddAttribute("m_y", CLASS_ATTRIBUTE(TestClass, m_y));
 	
-	sb.SetToString([](TestStruct * a) -> LuaString {		
-		return "TestStruct...";
-	});
+sb.SetToString([](TestStruct * a) -> LuaString {		
+	return "TestStruct...";
+});
 	
-	Lua::LuaClassBind<TestClass> cb("TestClass");	
-	cb.SetDefaultCtor<double>();
-	cb.AddCtor<double, double>("TestClass_ctor2");
-	
-	cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(TestClass, Print0));
-	cb.AddMethod("Print0_args", CLASS_METHOD_OVERLOAD(TestClass, Print0, double, double));
+Lua::LuaClassBind<TestClass> cb("TestClass");	
+cb.SetDefaultCtor<double>();
+cb.AddCtor<double, double>("TestClass_ctor2");
+
+cb.AddMethod("Print0", CLASS_METHOD_OVERLOAD(TestClass, Print0));
+cb.AddMethod("Print0_args", CLASS_METHOD_OVERLOAD(TestClass, Print0, double, double));
 			
-	cb.AddMethod("Print1", CLASS_METHOD(TestClass, Print1));
-	cb.AddMethod("Print2", CLASS_METHOD(TestClass, Print2));
-	cb.AddMethod("Print3", CLASS_METHOD(TestClass, Print3));
-	cb.AddMethod("Print4", CLASS_METHOD(TestClass, Print4));
-	cb.AddMethod("Print5", CLASS_METHOD(TestClass, Print5));
+cb.AddMethod("Print1", CLASS_METHOD(TestClass, Print1));
+cb.AddMethod("Print2", CLASS_METHOD(TestClass, Print2));
+cb.AddMethod("Print3", CLASS_METHOD(TestClass, Print3));
+cb.AddMethod("Print4", CLASS_METHOD(TestClass, Print4));
+cb.AddMethod("Print5", CLASS_METHOD(TestClass, Print5));
+
+cb.AddAttribute("m_val", CLASS_ATTRIBUTE(TestClass, m_val));
+cb.AddAttribute("m_tc", CLASS_ATTRIBUTE(TestClass, m_tc));
 	
-	cb.AddAttribute("m_val", CLASS_ATTRIBUTE(TestClass, m_val));
-	cb.AddAttribute("m_tc", CLASS_ATTRIBUTE(TestClass, m_tc));
-	
-	cb.SetToString([](TestClass * a) -> LuaString {		
-		return "TestClass...";
-	});
-	
-		
+cb.SetToString([](TestClass * a) -> LuaString {		
+	return "TestClass...";
+});
+			
 ````
 Each class must have one binded ctor via `SetDefaultCtor<...>`. This ctor name is same as the name of the "class". 
 However, you can specifiy additional ctors via `AddCtor<...>` and for each of them, unique name must be set.  
@@ -192,27 +191,26 @@ Method `SetToString` is optional and sets lambda function that is called, when `
 
 The above binded class can be called from Lua as
 ````lua
-	t = TestClass(150)
-	t:Print0()
-	t:Print0_args(1, 2)
-	local r = t:Print2()
-	t:Print3(t)
-	t:Print4(t)
-	t:Print5()
+t = TestClass(150)
+t:Print0()
+t:Print0_args(1, 2)
+local r = t:Print2()
+t:Print3(t)
+t:Print4(t)
+t:Print5()
 	
 	
-	v = TestStruct();
-	v.m_x = 15.0
-	print(v)
+v = TestStruct();
+v.m_x = 15.0
+print(v)
 	
-	t.m_tc = v
-	print(t.m_tc)
-
+t.m_tc = v
+print(t.m_tc)
 	
-	t.m_val = 10
-	print(t.m_val)
+t.m_val = 10
+print(t.m_val)
 	
-	t2 = TestClass_ctor2(150, 150)
+t2 = TestClass_ctor2(150, 150)
 	
 ````
 
@@ -222,24 +220,24 @@ You can also call Lua function from within C++. The only problem is, that script
 So, if you want to use this, be aware of this and try not to add any functionality outside "functions".
 
 ````lua
-	function add(x, y)
-		return x + y
-	end	
+function add(x, y)
+	return x + y
+end	
 	
-	function mul(x, y)
-		return x * y
-	end	
+function mul(x, y)
+	return x * y
+end	
 ````
 
 ````c++
 
-	std::shared_ptr<Lua::LuaScript> script = //.... init LuaScript ....
+std::shared_ptr<Lua::LuaScript> script = //.... init LuaScript ....
 
-    Lua::LuaFunction lAdd(script, "sum");	
-	int resAdd = lAdd.Call<int>(78, 45); //will return 123
+Lua::LuaFunction lAdd(script, "sum");	
+int resAdd = lAdd.Call<int>(78, 45); //will return 123
 	
-	Lua::LuaFunction lMull(script, "mul");	
-	int resMul = lMull.Call<int>(78, 45); //will return 3510
+Lua::LuaFunction lMull(script, "mul");	
+int resMul = lMull.Call<int>(78, 45); //will return 3510
 ````
 
 Benchmark & comparison
