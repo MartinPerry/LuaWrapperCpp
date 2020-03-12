@@ -40,6 +40,11 @@
 #define METHOD(MethodName) \
 	LuaCallbacks::function<decltype(&MethodName), &MethodName>
 
+//Macro for simple overloaded method registration
+#define METHOD_OVERLOAD(MethodName, ...) \
+	LuaCallbacks::function<decltype(OverloadMethod<##__VA_ARGS__>::get(&MethodName)), &MethodName>
+
+
 #define LUA_SAFE_DELETE(a) {if (a != nullptr) { delete a; a = nullptr; }};
 #define LUA_SAFE_DELETE_ARRAY(a) {if (a != nullptr) { delete[] a; a = nullptr; }};
 

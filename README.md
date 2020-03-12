@@ -74,6 +74,39 @@ Lua::LuaWrapper::GetInstance()->AddRegisterCallback(
 	});	
 ````			
 
+Binding C methods to wrapper
+------------------------------------------
+
+We can bind classic C methods.
+
+````c++
+	void cfunc1(int v)
+	{
+		printf("Hello method Param: %i\n", v);
+	}
+
+	void cfunc(int v)
+	{
+		printf("Hello method Param: %i\n", v);
+	}
+
+	void cfunc(int v1, int v2)
+	{
+		printf("Hello method Param: %i %i\n", v1, v2);
+	}
+````
+
+And bind to Lua
+
+````c++
+
+	std::shared_ptr<Lua::LuaScript> ls = ....;
+
+	ls->RegisterLuaFunction("cfunc_1", METHOD_OVERLOAD(cfunc, int));	
+	ls->RegisterLuaFunction("cfunc_2", METHOD_OVERLOAD(cfunc, int, int));	
+	ls->RegisterLuaFunction("cfunc", METHOD(cfunc1));	
+
+````
 
 Binding C++ class to wrapper
 ------------------------------------------

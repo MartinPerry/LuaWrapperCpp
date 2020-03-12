@@ -54,7 +54,21 @@ struct ClassOverloadMethod<T> {
 	static auto get(Ret(T::*)()const)->Ret(T::*)()const {};
 };
 
+//============================================================================
 
+template<typename... Args>
+struct OverloadMethod {
+	template<typename Ret>
+	static auto get(Ret(*)(Args...))->Ret(*)(Args...) {};
+};
+
+template<>
+struct OverloadMethod<> {
+	template<typename Ret>
+	static auto get(Ret(*)())->Ret(*)() {};
+};
+
+//============================================================================
 
 template<bool, class Ty1, class Ty2> struct MyIf
 {	// type is _Ty2 for assumed false
