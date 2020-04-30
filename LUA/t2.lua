@@ -93,6 +93,16 @@ function fallback_example:add2(x,y)
   return x+y
 end
 
+
+t = TestClass(150)
+t:Print0()
+t:Print0_args(1, 2)
+local r = t:Print2()
+t:Print3(t)
+t:Print4(t)
+t:Print5()
+HelloWorld("x", tt)
+
 --print_r(fallback_example)
 --print_r(getmetatable(fallback_example))
 

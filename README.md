@@ -189,6 +189,15 @@ All ctors behave like Factory pattern. In Lua, you call an ordinary method that 
 Method `SetToString` is optional and sets lambda function that is called, when `__tostring` metamethod is called in Lua.
 `CLASS_METHOD`, `CLASS_ATTRIBUTE` and `CLASS_METHOD_OVERLOAD` are macros to simplify binding. They are defined in `LuaMacros.h`.
 
+After class is created, you must bind it a given script.
+
+````c++
+
+std::shared_ptr<Lua::LuaScript> ls = ....;
+
+ls->RegisterLuaClass(cb);
+````
+
 The above binded class can be called from Lua as
 ````lua
 t = TestClass(150)

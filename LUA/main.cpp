@@ -166,8 +166,36 @@ private:
 //==================================================================================================
 //==================================================================================================
 
+class TestClass
+{
+public:
+	double m_val = 148;
+
+	TestClass(double val) { m_val = val; }
+	TestClass(double v1, double v2) { m_val = v1 * v2; }
+
+	void Print0() { printf("PRINTF_0\n"); }
+
+	void Print0(double vl, double v2) { printf("PRINTF_0: overload %f %f\n", vl, v2); }
+
+	void Print1(const short& v) { printf("PRINTF_1 %i\n", v); }
+
+	int Print2() { printf("PRINTF_2\n"); return 5; }
+
+	void Print3(TestClass * t) { printf("PRINTF_3 % f\n", t->m_val); }
+
+	void Print4(TestClass & t) { 
+		printf("PRINTF_4 % f\n", t.m_val); 
+	}
+
+	void Print5() const { printf("PRINTF_5\n"); }
+};
 
 
+void HelloMethod(const std::string & xx, const TestClass & t)
+{
+	printf("Hello method %f\n", t.m_val);
+}
 
 template<typename T, typename ... Args>
 using get_print_type = decltype(std::declval<T>().Print0(std::declval<Args>() ...)) (T::*)(Args ...);
@@ -194,7 +222,28 @@ std::shared_ptr<Lua::LuaScript> Create(LuaString name)
 
 	//ls->RegisterFunction("Print_fce", NULL);
 	
+	Lua::LuaClassBind<TestClass> cb1("TestClass");
+	cb1.SetDefaultCtor<double>();
+	cb1.AddCtor<double, double>("TestClass_ctor2");
 
+	cb1.AddMethod("Print0", CLASS_METHOD_OVERLOAD(TestClass, Print0));
+	cb1.AddMethod("Print0_args", CLASS_METHOD_OVERLOAD(TestClass, Print0, double, double));
+
+	cb1.AddMethod("Print1", CLASS_METHOD(TestClass, Print1));
+	cb1.AddMethod("Print2", CLASS_METHOD(TestClass, Print2));
+	cb1.AddMethod("Print3", CLASS_METHOD(TestClass, Print3));
+	cb1.AddMethod("Print4", CLASS_METHOD(TestClass, Print4));
+	cb1.AddMethod("Print5", CLASS_METHOD(TestClass, Print5));
+
+	cb1.AddAttribute("m_val", CLASS_ATTRIBUTE(TestClass, m_val));
+	
+	cb1.SetToString([](TestClass * a) -> LuaString {
+		return "TestClass...";
+		});
+
+	
+	ls->RegisterLuaFunction("HelloWorld", METHOD(HelloMethod));
+	ls->RegisterLuaClass(cb1);
 
 	Lua::LuaClassBind<Vector2> cbv2("Vector2");
 	cbv2.SetDefaultCtor<>();
@@ -320,11 +369,19 @@ int main(int argc, char * argv[])
 		return Lua::LuaUtils::LoadFromFile(str);
 	});
 
+	std::shared_ptr<Lua::LuaScript> lx = Create("t2.lua");
+
+	TestClass t(7);
+	
+	lx->SetGlobalVarClass("tt", &t);
+
+	lx->Run();
+	return 0;
 	
 	//
-	RunBenchmarkLuaFromCpp();
+	//RunBenchmarkLuaFromCpp();
 
-	RunBenchmarkCppFromLua();
+	//RunBenchmarkCppFromLua();
 
 
 	/*

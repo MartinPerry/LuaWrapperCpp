@@ -1,6 +1,5 @@
 
 
-
 a = Account(150)
 
 for i=1, 100 do
