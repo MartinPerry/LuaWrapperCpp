@@ -100,7 +100,7 @@ LuaString LuaWrapper::GetScriptFromFile(const LuaString & scriptFileName)
 
 std::shared_ptr<LuaScript> LuaWrapper::AddScriptFromFile(const LuaString & scriptFileName)
 {
-	return this->AddScript(scriptFileName, scriptFileName);
+	return this->AddScriptFromFile(scriptFileName, scriptFileName);
 }
 
 
