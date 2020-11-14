@@ -265,5 +265,8 @@
     <None Include="benchmark.lua">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="t3.lua">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

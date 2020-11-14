@@ -63,8 +63,8 @@ namespace Lua
 		//=============================================================================
 		//=================== Get data passed from Lua callback function ==============
 		//=============================================================================
-
-
+		
+		
 		template <typename T>
 		static LUA_INLINE T * GetFnInputImpl(lua_State * L, int i, tag<T *>);
 
@@ -139,6 +139,7 @@ namespace Lua
 	// Implementation
 	//=============================================================================================
 
+	
 	template <class T>
 	LUA_INLINE T LuaFunctionsWrapper::GetFnInput(lua_State * L, int i)
 		//-> decltype(GetFnInputImpl(L, i, tag<T>{}))

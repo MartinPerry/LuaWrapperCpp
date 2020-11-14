@@ -236,17 +236,24 @@ end
 function mul(x, y)
 	return x * y
 end	
+
+function my_print(x, y)
+	print("Print " .. x .. " / " .. y)
+end	
 ````
 
 ````c++
 
 std::shared_ptr<Lua::LuaScript> script = //.... init LuaScript ....
 
-Lua::LuaFunction lAdd(script, "sum");	
+Lua::LuaFunction lAdd(script, "add");	
 int resAdd = lAdd.Call<int>(78, 45); //will return 123
 	
 Lua::LuaFunction lMull(script, "mul");	
 int resMul = lMull.Call<int>(78, 45); //will return 3510
+
+Lua::LuaFunction lPrint(script, "my_print");	
+lPrint.Call<void>(78, 45); //will return anything
 ````
 
 Benchmark & comparison

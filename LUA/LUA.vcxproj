@@ -569,6 +569,7 @@
     <None Include="benchmark.lua" />
     <None Include="t.lua" />
     <None Include="t2.lua" />
+    <None Include="t3.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

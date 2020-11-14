@@ -151,17 +151,6 @@ a.vv = 44
 print("44 / " .. a.vv)
 
 
---print(a.cc)
---print("----")
---print(a.cc:Print0())
---print(ee.vv)
-print("148 / " .. ee.vv)
-ee.vv = 55
-print("55 / " .. ee.vv)
-ee:Print0()
-print("77 / " .. ee.vv)
---os.exit()
-
 --print(fallback_example.sy)
 --print(fallback_example.k)
 --print(fallback_example:add2(1,2))

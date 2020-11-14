@@ -369,12 +369,19 @@ int main(int argc, char * argv[])
 		return Lua::LuaUtils::LoadFromFile(str);
 	});
 
-	std::shared_ptr<Lua::LuaScript> lx = Create("t2.lua");
+	std::shared_ptr<Lua::LuaScript> lx = Create("t3.lua");
 
 	TestClass t(7);
-	
+
 	lx->SetGlobalVarClass("tt", &t);
 
+	
+	Lua::LuaFunction lTestVoid(lx, "testVoid");
+	lTestVoid.Call<void>(78, 45);
+
+	Lua::LuaFunction lAdd(lx, "add");
+	int res = lAdd.Call<int>(78, 45);
+		
 	lx->Run();
 	return 0;
 	
